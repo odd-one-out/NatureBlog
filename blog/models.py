@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils.text import slugify
 
 # Create your models here.
 
@@ -9,7 +10,7 @@ class Category(models.Model):
     '''Posts categories'''
 
     name = models.CharField(max_length=30, unique=True)
-    slug = models.SlugField(max_length=35, unique=True)
+    slug = models.SlugField(max_length=35, unique=True, blank=True, null=True)
     description = models.TextField(max_length=300, blank=True, null=True)
     image = models.ImageField(upload_to='category_images', blank=True, null=True)
 
@@ -18,6 +19,11 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:  # Only generate if slug is not already set
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
     
 
 def get_sentinel_user():
@@ -32,7 +38,7 @@ class Post(models.Model):
     )
 
     title = models.CharField(max_length=30, unique=True)
-    slug = models.SlugField(max_length=35, unique=True)
+    slug = models.SlugField(max_length=35, unique=True, blank=True, null=True)
     description = models.TextField(max_length=500, blank=True, null=True)
     image1 = models.ImageField(upload_to='post_images', blank=True, null=True)
     image2 = models.ImageField(upload_to='post_images', blank=True, null=True)
@@ -49,7 +55,10 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 
-
+    def save(self, *args, **kwargs):
+        if not self.slug:  # Only generate if slug is not already set
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
 
 
