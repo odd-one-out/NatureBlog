@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+    <div class="col-xxl-6 col-xl-8 col-12 mx-auto mt-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title py-2">{{ user.username }}</h5>
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action"
+                        aria-current="true">
+                        My posts
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">My comments</a>
+                    <a href="#" class="list-group-item list-group-item-action">Favourite posts</a>
+                </div>
+                <div class="card-footer mt-3">
+                    <p>Info:</p>
+                    <form method="post" action="{% url "blog:profile" %}">
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="my-4">
+                        {{ field.errors }}
+                        {{ field.label_tag }} {{ field }}
+                        </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary mt-3">Save changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+

@@ -4,11 +4,11 @@ from django.views.generic.base import TemplateView
 from blog.models import Category, Post
 
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView, UpdateView, ListView
 from django.contrib.auth.views import LoginView
 from django.views.generic.edit import FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from blog.forms import PostForm
+from blog.forms import PostForm, UserUPdateForm
 
 
 from django.urls import reverse_lazy
@@ -64,6 +64,16 @@ class SinginView(LoginView):
         if not 'login' in self.request.META.get('HTTP_REFERER'):
             return self.request.META.get('HTTP_REFERER')
         return reverse_lazy('blog:index')
+    
+class ChangeInfoView(LoginRequiredMixin, UpdateView):
+    template_name = 'profile.html'
+    form_class = UserUPdateForm
+    success_url = reverse_lazy('blog:profile')
+    extra_context = {'title': 'Nature Blog - profile'}
+    login_url = reverse_lazy('blog:login')
+
+    def get_object(self, queryset=None):
+        return self.request.user
     
 
 class CreatePostView(LoginRequiredMixin, FormView):
