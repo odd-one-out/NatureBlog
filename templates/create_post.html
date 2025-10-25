@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+
+{% block content %}
+
+<div class="col-lg-6 col-12 mx-auto">
+    <h4>Post creation</h4>
+    <form method="post" enctype="multipart/form-data" action="{% url "blog:create" %}">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="my-4">
+        {{ field.errors }}
+        {{ field.label_tag }} {{ field }}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Create post</button>
+    </form>
+</div>
+
+{% endblock content %}
+
+

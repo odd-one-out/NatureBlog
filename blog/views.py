@@ -1,10 +1,15 @@
+
 from django.shortcuts import render, redirect
 from django.views.generic.base import TemplateView
-from blog.models import Category
+from blog.models import Category, Post
 
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.views.generic import CreateView
+from django.views.generic import CreateView, ListView
 from django.contrib.auth.views import LoginView
+from django.views.generic.edit import FormView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from blog.forms import PostForm
+
 
 from django.urls import reverse_lazy
 from django.contrib import auth, messages
@@ -19,7 +24,15 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Nature blog - Main'
         context['categories'] = Category.objects.all()
+        
         return context
+    
+
+class PostListView(ListView):
+    template_name = 'posts.html'
+    model = Post #так выбирутся все товары из бд, т. к. это тоже, что и Post.objects.all()
+    paginate_by = 4
+    context_object_name = 'posts'
     
 
 class RegisterView(CreateView):
@@ -51,3 +64,24 @@ class SinginView(LoginView):
         if not 'login' in self.request.META.get('HTTP_REFERER'):
             return self.request.META.get('HTTP_REFERER')
         return reverse_lazy('blog:index')
+    
+
+class CreatePostView(LoginRequiredMixin, FormView):
+
+    template_name = "create_post.html"
+    form_class = PostForm
+    success_url = reverse_lazy('blog:index')
+    login_url = reverse_lazy('blog:login')
+
+    extra_content = {
+        'title': 'New Sound - Order',
+    }
+
+    def form_valid(self, form):
+        post = form.save(commit=False)
+        post.author = self.request.user
+        post.save()
+        return redirect(self.success_url)
+
+    
+

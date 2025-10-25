@@ -10,6 +10,7 @@ header {
 
 .wrapper {
     margin-inline: auto;
+    margin-top: 2rem;
     margin-bottom: 2rem;
     min-height: 100vh;
     width: 70vw;
