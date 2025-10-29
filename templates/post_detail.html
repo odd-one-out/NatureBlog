@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+
+                    <div class="col-12">
+                        <h4 class="my-3 text-center">Post title</h4>
+                        <div class="card mb-2">
+                            <div id="carouselExample" class="carousel slide">
+                                <div class="carousel-inner">
+                                    <div class="carousel-item active detail">
+                                        {% if post.image1 %}
+                                        <img src="{{ post.image1.url }}" class="d-block w-100" alt="{{ post.title }}">
+                                        {% else %}
+                                        <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
+                                        {% endif %}
+                                    </div>
+                                    <div class="carousel-item detail">
+                                        {% if post.image2 %}
+                                        <img src="{{ post.image2.url}}" class="d-block w-100" alt="{{ post.title }}">
+                                        {% else %}
+                                        <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
+                                        {% endif %}
+                                    </div>
+                                    <div class="carousel-item detail">
+                                        {% if post.image3 %}
+                                        <img src="{{ post.image3.url}}" class="d-block w-100" alt="{{ post.title }}">
+                                        {% else %}
+                                        <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample"
+                                    data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon bg-dark rounded p-4" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselExample"
+                                    data-bs-slide="next">
+                                    <span class="carousel-control-next-icon bg-dark rounded p-4" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">{{ post.description }}</p>
+                                <p class="fst-italic">posted by {{ post.author }}</p>
+
+                                <div class="d-flex flex-row align-items-center mb-3">
+
+                                    <form action="{% url 'blog:post' post.slug %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-primary me-5"><i
+                                            class="fa-regular fa-heart me-2"></i>like post
+                                    </button>
+                                    </form>
+                                    
+                                    <i class="fa-regular fa-heart"></i>
+                                    <p class="me-4"> {{ post.likes.count }}</p>
+                                    <i class="fa-regular fa-comment"></i>
+                                    <p>0</p>
+                                </div>
+                                <form>
+                                    <div class="d-flex flex-row">
+                                        <input class="form-control me-2" type="text" placeholder="Add a comment" />
+                                        <button class="btn btn-primary" type="submit">Comment</button>
+                                    </div>
+                                </form>
+                                <div class="mt-4">
+                                    <p class="fs-5 mt-2">Comments:</p>
+                                    <div class="my-3">
+                                        <div class="d-flex flex-row align-items-center">
+                                            <span class=" fw-semibold me-3">Kir Surname</span>
+                                            <span class="fst-italic">4 hours ago</span>
+                                        </div>
+                                        <p class="card-text">Some quick example text to build on the card title and make
+                                            up
+                                            the bulk of the card’s content. Lorem ipsum dolor, sit amet consectetur adipisicing elit. Nostrum at accusamus provident! Doloremque earum enim suscipit, vero quam blanditiis laudantium incidunt aliquid iusto sed culpa libero veritatis alias molestiae mollitia.</p>
+                                    </div>
+                                    <div class="my-3">
+                                        <div class="d-flex flex-row align-items-center">
+                                            <span class=" fw-semibold me-3">Kir Surname</span>
+                                            <span class="fst-italic">4 hours ago</span>
+                                        </div>
+                                        <p class="card-text">Some quick example text to build on the card title and make
+                                            up
+                                            the bulk of the card’s content.</p>
+                                    </div>
+                                    <div class="my-3">
+                                        <div class="d-flex flex-row align-items-center">
+                                            <span class=" fw-semibold me-3">Kir Surname</span>
+                                            <span class="fst-italic">4 hours ago</span>
+                                        </div>
+                                        <p class="card-text">Some quick example text to build on the card title and make
+                                            up
+                                            the bulk of the card’s content.</p>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+
+{% endblock content %}
+
+
+

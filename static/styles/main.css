@@ -25,10 +25,14 @@ footer {
     background-color: rgb(216, 216, 216);
     margin-top: auto;
 
- } 
+ }
 
-.carousel-item {
+.carousel-item.latest {
     height: 50vh;
+}
+
+.carousel-item.detail {
+    height: 70vh;
 }
 
 .carousel-item img {
@@ -38,7 +42,11 @@ footer {
 
 }
 
-.card img {
+.card {
+    height: 100%;
+}
+
+.card>a>img, .card>img {
     height: 35vh;
     object-fit: cover;
     object-position: center;

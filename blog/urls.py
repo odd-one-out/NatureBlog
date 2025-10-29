@@ -8,7 +8,8 @@ app_name = 'blog'
 
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
-    path('posts/', views.PostListView.as_view(), name='posts'),
+    path('posts/<slug:cat_slug>/', views.PostListView.as_view(), name='posts'),
+    path('post/<slug:post_slug>/', views.PostView.as_view(), name='post'),
     path('register/', views.RegisterView.as_view(), name='register'),
     path('login/', views.SinginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(next_page=reverse_lazy('blog:index')), name='logout'),

@@ -35,7 +35,7 @@
                                 <a class="nav-link fs-5 {% if request.resolver_match.view_name == "blog:index" %}active{% endif %}" aria-current="page" href="{% url "blog:index" %}">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link fs-5" href="{% url "blog:posts" %}">Posts</a>
+                                <a class="nav-link fs-5" href="{% url "blog:posts" 'all' %}">Posts</a>
                             </li>
                             {% if user.is_admin or user.is_superuser%}
                             <li class="nav-item">

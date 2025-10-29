@@ -4,11 +4,13 @@ from django.views.generic.base import TemplateView
 from blog.models import Category, Post
 
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.views.generic import CreateView, UpdateView, ListView
+from django.views import View
+from django.views.generic import CreateView, DetailView, UpdateView, ListView
 from django.contrib.auth.views import LoginView
 from django.views.generic.edit import FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from blog.forms import PostForm, UserUPdateForm
+from django.db.models import Count
 
 
 from django.urls import reverse_lazy
@@ -30,9 +32,59 @@ class IndexView(TemplateView):
 
 class PostListView(ListView):
     template_name = 'posts.html'
-    model = Post #так выбирутся все товары из бд, т. к. это тоже, что и Post.objects.all()
+    #model = Post так выбирутся все товары из бд, т. к. это тоже, что и Post.objects.all()
     paginate_by = 4
     context_object_name = 'posts'
+
+    def get_queryset(self):
+        cat_slug = self.kwargs.get('cat_slug')
+        if cat_slug == 'all':
+            posts =  Post.objects.all().annotate(likes_count=Count('likes'))
+        else:
+            posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes'))
+
+        order_by = self.request.GET.get('order_by', None)
+
+        if order_by:
+# СУБД умеет выполнять анализ данных на своей стороне(подсчет средних значений и пр) и сам язык SQL содержит средства для описания того,
+# что же СУБД должна вычислить или, как ещё говорят, выполнить агрегацию
+# это необходимо, чтоб не запрашивать лишнее.
+# в django для получения из бд уже аггрегированных данных есть ф-ция queryset-a aggregate, 
+# его параметры - спец аггрегирующие ф-ции: Avg, Count, Max, Min
+# Процесс, при котором к каждому объекту из выборки применяется агрегирующая функция, назвается аннотированием. 
+#  .aggregate(Count('postcomment')) подсчитает количество всех комментариев,
+#  .annotate(Count('postcomment')) даст количество комментариев к каждому посту. 
+# против дублирующихся записей в бд - distinct=True
+            posts = posts.order_by(order_by)
+        return posts
+    
+    # динамически загружающийся контент нельзя передать через extra_context,
+    # поэтому используем метод get_context_data()
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Nature Blog - posts'
+        context['cat_slug'] = self.kwargs.get('cat_slug')
+        #context['how_many'] = len(self.object_list) - вместо этого в шаблоне использовать фильтр length
+        return context
+    
+    
+
+class PostView(DetailView):
+    template_name = 'post_detail.html'
+    model = Post
+    slug_url_kwarg = 'post_slug'
+    context_object_name = 'post'
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            #messages.warning(self.request, 'You need to login to leave a feedback')
+            return redirect('blog:login')
+        post = Post.objects.get(slug=self.kwargs.get(self.slug_url_kwarg))
+        if post.likes.filter(pk=request.user.id).exists():
+            post.likes.remove(request.user.id)
+        else:
+            post.likes.add(request.user)
+        return redirect('blog:post', self.kwargs.get(self.slug_url_kwarg))
     
 
 class RegisterView(CreateView):
