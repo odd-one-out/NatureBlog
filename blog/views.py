@@ -26,6 +26,7 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Nature blog - Main'
         context['categories'] = Category.objects.all()
+        context['posts'] = Post.objects.all()[:3]
         
         return context
     
@@ -33,7 +34,6 @@ class IndexView(TemplateView):
 class PostListView(ListView):
     template_name = 'posts.html'
     #model = Post так выбирутся все товары из бд, т. к. это тоже, что и Post.objects.all()
-    paginate_by = 4
     context_object_name = 'posts'
 
     def get_queryset(self):

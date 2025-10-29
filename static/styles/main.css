@@ -12,7 +12,7 @@ header {
     margin-inline: auto;
     margin-top: 2rem;
     margin-bottom: 2rem;
-    min-height: 100vh;
+    min-height: 100%;
     width: 70vw;
 
     overflow-x: hidden;
@@ -32,7 +32,7 @@ footer {
 }
 
 .carousel-item.detail {
-    height: 70vh;
+    height: 700px;
 }
 
 .carousel-item img {
@@ -90,8 +90,15 @@ footer {
     width: 90vw;
     }
 
+
     .footer {
         margin-inline: 10%;
         flex-direction: column;
+    }
+}
+
+@media(max-width: 576px) {
+    .carousel-item.detail {
+        height: 400px;
     }
 }
