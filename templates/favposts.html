@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+    <div class="col-12">
+        <h4 class="my-3 text-center">Your Favourite Posts</h4>
+        <div class="row">
+            {% for post in favposts %}
+            <div class="col-lg-4 col-md-6 col-12 my-2">
+                <div class="card">
+                    {% if post.image1 %}
+                    <a href="{% url "blog:post" post.slug %}">
+                        <img src="{{ post.image1.url }}" class="card-img-top" alt="{{ post.title }}">
+                    </a>
+                    {% else %}
+                        <img src="{% static "images/no_image.jpg" %}" class="card-img-top">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ post.title }}</h5>
+                        <p class="card-text">{{ post.description }}</p>
+                        <div class="like-comment">
+                            <i class="fa-regular fa-heart"></i>
+                            <p class="me-4"> {{ post.likes_count }}</p>
+                            <i class="fa-regular fa-comment"></i>
+                            <p>0</p>
+                        </div>
+                        <p class="fst-italic">posted by {{ post.author }}</p>
+                        <a href="{% url "blog:post" post.slug %}" class="btn btn-primary">view post</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock content %}
+
+
+

@@ -56,6 +56,10 @@ class PostListView(ListView):
 #  .annotate(Count('postcomment')) даст количество комментариев к каждому посту. 
 # против дублирующихся записей в бд - distinct=True
             posts = posts.order_by(order_by)
+        if self.request.user.is_authenticated:
+            user_likes = self.request.GET.get('user_likes')
+            if user_likes:
+                posts = posts.filter(likes__id=self.request.user.id)
         return posts
     
     # динамически загружающийся контент нельзя передать через extra_context,
@@ -67,7 +71,18 @@ class PostListView(ListView):
         #context['how_many'] = len(self.object_list) - вместо этого в шаблоне использовать фильтр length
         return context
     
+class FavPostView(LoginRequiredMixin, ListView):
+    template_name = 'favposts.html'
+    context_object_name = 'favposts'
+    login_url = reverse_lazy('blog:login')
+
+    def get_queryset(self):
+        return Post.objects.filter(likes__id=self.request.user.id).annotate(likes_count=Count('likes'))
     
+    def get_context_data(self, **kwargs):
+        context =  super().get_context_data(**kwargs)
+        context['title'] = 'Nature Blog  - Favourite posts'
+        return context
 
 class PostView(DetailView):
     template_name = 'post_detail.html'
