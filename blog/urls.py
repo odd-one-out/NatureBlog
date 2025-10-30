@@ -15,6 +15,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page=reverse_lazy('blog:index')), name='logout'),
     path('profile/', views.ChangeInfoView.as_view(), name='profile'),
     path('create/', views.CreatePostView.as_view(), name='create'),
-    path('favourites/', views.FavPostView.as_view(), name='favs'),
-    path('myposts/', views.MyPostView.as_view(), name='myposts'),
+
 ]

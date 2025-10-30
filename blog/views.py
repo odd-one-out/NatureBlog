@@ -78,31 +78,6 @@ class PostListView(ListView):
         #context['how_many'] = len(self.object_list) - вместо этого в шаблоне использовать фильтр length
         return context
     
-class FavPostView(LoginRequiredMixin, ListView):
-    template_name = 'favposts.html'
-    context_object_name = 'favposts'
-    login_url = reverse_lazy('blog:login')
-
-    def get_queryset(self):
-        return Post.objects.filter(likes__id=self.request.user.id).annotate(likes_count=Count('likes')).select_related('author')
-    
-    def get_context_data(self, **kwargs):
-        context =  super().get_context_data(**kwargs)
-        context['title'] = 'Nature Blog  - Favourite posts'
-        return context
-    
-class MyPostView(LoginRequiredMixin, ListView):
-    template_name = 'my_posts.html'
-    context_object_name = 'my_posts'
-    login_url = reverse_lazy('blog:login')
-
-    def get_queryset(self):
-        return Post.objects.filter(author__id=self.request.user.id).annotate(likes_count=Count('likes'))
-    
-    def get_context_data(self, **kwargs):
-        context =  super().get_context_data(**kwargs)
-        context['title'] = 'Nature Blog  - My posts'
-        return context
 
 class PostView(DetailView):
     template_name = 'post_detail.html'

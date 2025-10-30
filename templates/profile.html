@@ -8,18 +8,15 @@
             <div class="card-body">
                 <h5 class="card-title py-2">{{ user.username }}</h5>
                 <div class="list-group">
-                    <a href="{% url "blog:myposts" %}" class="list-group-item list-group-item-action"
-                        aria-current="true">My posts</a>
-                    <form action="{% url "blog:posts" 'all' %}" method="get" class="d-flex">
-                        <input class="form-control" name="user_likes" type="hidden" value="1">
-                        <button class="list-group-item list-group-item-action" type="submit">Favourite posts</button>
-                    </form>
                     <form action="{% url "blog:posts" 'all' %}" method="get" class="d-flex">
                         <input class="form-control" name="user_posts" type="hidden" value="1">
                         <button class="list-group-item list-group-item-action" type="submit">My posts</button>
                     </form>
+                    <form action="{% url "blog:posts" 'all' %}" method="get" class="d-flex">
+                        <input class="form-control" name="user_likes" type="hidden" value="1">
+                        <button class="list-group-item list-group-item-action" type="submit">Favourite posts</button>
+                    </form>
                     <a href="#" class="list-group-item list-group-item-action disabled">My comments</a>
-                    <a href="{% url "blog:favs" %}" class="list-group-item list-group-item-action">Favourite posts</a>
                 </div>
                 <div class="card-footer mt-3">
                     <p>Info:</p>
