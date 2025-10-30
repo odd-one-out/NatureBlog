@@ -16,4 +16,5 @@ urlpatterns = [
     path('profile/', views.ChangeInfoView.as_view(), name='profile'),
     path('create/', views.CreatePostView.as_view(), name='create'),
     path('favourites/', views.FavPostView.as_view(), name='favs'),
+    path('myposts/', views.MyPostView.as_view(), name='myposts'),
 ]

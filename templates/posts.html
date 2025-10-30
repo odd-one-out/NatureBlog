@@ -5,7 +5,7 @@
 {% block content %}
 
                     <div class="col-12">
-                        <h4 class="my-3 text-center">Astro posts</h4>
+                        <h4 class="my-3 text-center">{% if page_title %}{{page_title}}{% else %}{{ cat_slug }}{% endif %}</h4>
                         <div class="d-flex justify-content-end">
                             <a class="btn btn-outline-primary btn-lg" href="{% url "blog:create" %}">+ add post</a>
                         </div>

@@ -35,13 +35,14 @@ class PostListView(ListView):
     template_name = 'posts.html'
     #model = Post так выбирутся все товары из бд, т. к. это тоже, что и Post.objects.all()
     context_object_name = 'posts'
+    page_title = None
 
     def get_queryset(self):
         cat_slug = self.kwargs.get('cat_slug')
         if cat_slug == 'all':
-            posts =  Post.objects.all().annotate(likes_count=Count('likes'))
+            posts =  Post.objects.all().annotate(likes_count=Count('likes')).select_related('author')
         else:
-            posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes'))
+            posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author')
 
         order_by = self.request.GET.get('order_by', None)
 
@@ -58,8 +59,13 @@ class PostListView(ListView):
             posts = posts.order_by(order_by)
         if self.request.user.is_authenticated:
             user_likes = self.request.GET.get('user_likes')
+            user_posts = self.request.GET.get('user_posts')
             if user_likes:
                 posts = posts.filter(likes__id=self.request.user.id)
+                self.page_title = 'Favourite posts'
+            elif user_posts:
+                posts = posts.filter(author__id=self.request.user.id)
+                self.page_title = 'My posts'
         return posts
     
     # динамически загружающийся контент нельзя передать через extra_context,
@@ -68,6 +74,7 @@ class PostListView(ListView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Nature Blog - posts'
         context['cat_slug'] = self.kwargs.get('cat_slug')
+        context['page_title'] = self.page_title
         #context['how_many'] = len(self.object_list) - вместо этого в шаблоне использовать фильтр length
         return context
     
@@ -77,18 +84,34 @@ class FavPostView(LoginRequiredMixin, ListView):
     login_url = reverse_lazy('blog:login')
 
     def get_queryset(self):
-        return Post.objects.filter(likes__id=self.request.user.id).annotate(likes_count=Count('likes'))
+        return Post.objects.filter(likes__id=self.request.user.id).annotate(likes_count=Count('likes')).select_related('author')
     
     def get_context_data(self, **kwargs):
         context =  super().get_context_data(**kwargs)
         context['title'] = 'Nature Blog  - Favourite posts'
         return context
+    
+class MyPostView(LoginRequiredMixin, ListView):
+    template_name = 'my_posts.html'
+    context_object_name = 'my_posts'
+    login_url = reverse_lazy('blog:login')
+
+    def get_queryset(self):
+        return Post.objects.filter(author__id=self.request.user.id).annotate(likes_count=Count('likes'))
+    
+    def get_context_data(self, **kwargs):
+        context =  super().get_context_data(**kwargs)
+        context['title'] = 'Nature Blog  - My posts'
+        return context
 
 class PostView(DetailView):
     template_name = 'post_detail.html'
-    model = Post
     slug_url_kwarg = 'post_slug'
     context_object_name = 'post'
+
+    def get_queryset(self):
+        return Post.objects.select_related('author')
+
 
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
