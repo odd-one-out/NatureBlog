@@ -1,8 +1,6 @@
 
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.views.generic.base import TemplateView
-from blog.models import Category, Post
-
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.views import View
 from django.views.generic import CreateView, DetailView, UpdateView, ListView
@@ -11,10 +9,11 @@ from django.views.generic.edit import FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from blog.forms import PostForm, UserUPdateForm
 from django.db.models import Count
-
-
 from django.urls import reverse_lazy
 from django.contrib import auth, messages
+
+from blog.models import Category, Post
+from blog.utils import search_post
 
 # Create your views here.
 
@@ -38,15 +37,6 @@ class PostListView(ListView):
     page_title = None
 
     def get_queryset(self):
-        cat_slug = self.kwargs.get('cat_slug')
-        if cat_slug == 'all':
-            posts =  Post.objects.all().annotate(likes_count=Count('likes')).select_related('author')
-        else:
-            posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author')
-
-        order_by = self.request.GET.get('order_by', None)
-
-        if order_by:
 # СУБД умеет выполнять анализ данных на своей стороне(подсчет средних значений и пр) и сам язык SQL содержит средства для описания того,
 # что же СУБД должна вычислить или, как ещё говорят, выполнить агрегацию
 # это необходимо, чтоб не запрашивать лишнее.
@@ -56,7 +46,20 @@ class PostListView(ListView):
 #  .aggregate(Count('postcomment')) подсчитает количество всех комментариев,
 #  .annotate(Count('postcomment')) даст количество комментариев к каждому посту. 
 # против дублирующихся записей в бд - distinct=True
+        cat_slug = self.kwargs.get('cat_slug')
+        if cat_slug == 'all':
+            posts =  Post.objects.all().annotate(likes_count=Count('likes')).select_related('author')
+        else:
+            posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author')
+
+        order_by = self.request.GET.get('order_by', None)
+        search = self.request.GET.get('q', None)
+
+        if order_by:
             posts = posts.order_by(order_by)
+        if search:
+            posts = search_post(search).annotate(likes_count=Count('likes')).select_related('author')
+            self.page_title = 'Search results:'
         if self.request.user.is_authenticated:
             user_likes = self.request.GET.get('user_likes')
             user_posts = self.request.GET.get('user_posts')

@@ -4,74 +4,75 @@
 
 {% block content %}
 
-                    <div class="col-12">
-                        <h4 class="my-3 text-center">{% if page_title %}{{page_title}}{% else %}{{ cat_slug }}{% endif %}</h4>
-                        <div class="d-flex justify-content-end">
-                            <a class="btn btn-outline-primary btn-lg" href="{% url "blog:create" %}">+ add post</a>
+    <div class="col-12">
+        <h4 class="my-3 text-center">{% if page_title %}{{page_title}}{% else %}{{ cat_slug }}{% endif %}</h4>
+        <div class="d-flex justify-content-end">
+            <a class="btn btn-outline-primary btn-lg" href="{% url "blog:create" %}">+ add post</a>
+        </div>
+        <div class="dropdown dropend mb-2">
+            <a class="btn btn-lg dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">Sort by
+            </a>
+            <ul class="dropdown-menu">
+                <form action="{% url "blog:posts" cat_slug %}" method="get">
+                {% if request.GET.user_posts %}
+                <input type="hidden" name="user_posts" value="{{ request.GET.user_posts }}">
+                {% elif request.GET.user_likes %}
+                <input type="hidden" name="user_likes" value="{{ request.GET.user_likes }}">
+                {% elif request.GET.q %}
+                <input type="hidden" name="q" value="{{ request.GET.q }}">
+                {% endif %}
+                <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
+                    id="flexRadioDefault1" value="date" {% if request.GET.order_by == 'date' %}checked{% endif %}>
+                    <label class="form-check-label ms-2" for="flexRadioDefault1">Oldest first</label>
+                </li>
+                <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
+                    id="flexRadioDefault1" value="-date" {% if request.GET.order_by == '-date' %}checked{% endif %}>
+                    <label class="form-check-label ms-2" for="flexRadioDefault1">Latest first</label>
+                </li>
+                <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
+                    id="flexRadioDefault1" value="-likes_count" {% if request.GET.order_by == '-likes_count' %}checked{% endif %}>
+                    <label class="form-check-label ms-2" for="flexRadioDefault1">Likes</label>
+                </li>
+                    <li class="dropdown-item disabled fs-5"><input class="form-check-input" type="radio"  name="order_by"
+                    id="flexRadioDefault1" value="likes" {% if request.GET.order_by == 'likes' %}checked{% endif %}>
+                    <label class="form-check-label ms-2" for="flexRadioDefault1">Comments</label>
+                </li>     
+                <li class="dropdown-item fs-5">
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                </li>
+                </form>
+            </ul>
+        </div>
+        <div class="row">
+            {% for post in posts %}
+            <div class="col-lg-4 col-md-6 col-12 my-2">
+                <div class="card">
+                    {% if post.image1 %}
+                    <a href="{% url "blog:post" post.slug %}">
+                        <img src="{{ post.image1.url }}" class="card-img-top" alt="{{ post.title }}">
+                    </a>
+                    {% else %}
+                        <img src="{% static "images/no_image.jpg" %}" class="card-img-top">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ post.title }}</h5>
+                        <p class="card-text">{{ post.description }}</p>
+                        <div class="like-comment">
+                            <i class="fa-regular fa-heart"></i>
+                            <p class="me-4"> {{ post.likes_count }}</p>
+                            <i class="fa-regular fa-comment"></i>
+                            <p>0</p>
                         </div>
-                        <div class="dropdown dropend mb-2">
-                            <a class="btn btn-lg dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                                Sort by
-                            </a>
-                            <ul class="dropdown-menu">
-                                <form action="{% url "blog:posts" cat_slug %}" method="get">
-                                {% if request.GET.user_posts %}
-                                <input type="hidden" name="user_posts" value="{{ request.GET.user_posts }}">
-                                {% elif request.GET.user_likes %}
-                                <input type="hidden" name="user_likes" value="{{ request.GET.user_likes }}">
-                                {% endif %}
-                                <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                                    id="flexRadioDefault1" value="date" {% if request.GET.order_by == 'date' %}checked{% endif %}>
-                                    <label class="form-check-label ms-2" for="flexRadioDefault1">Oldest first</label>
-                                </li>
-                                <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                                    id="flexRadioDefault1" value="-date" {% if request.GET.order_by == '-date' %}checked{% endif %}>
-                                    <label class="form-check-label ms-2" for="flexRadioDefault1">Latest first</label>
-                                </li>
-                                <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                                    id="flexRadioDefault1" value="-likes_count" {% if request.GET.order_by == '-likes_count' %}checked{% endif %}>
-                                    <label class="form-check-label ms-2" for="flexRadioDefault1">Likes</label>
-                                </li>
-                                    <li class="dropdown-item disabled fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                                    id="flexRadioDefault1" value="likes" {% if request.GET.order_by == 'likes' %}checked{% endif %}>
-                                    <label class="form-check-label ms-2" for="flexRadioDefault1">Comments</label>
-                                </li>     
-                                <li class="dropdown-item fs-5">
-                                    <button type="submit" class="btn btn-primary">Apply</button>
-                                </li>
-                                </form>
-                            </ul>
-                        </div>
-                        <div class="row">
-                            {% for post in posts %}
-                            <div class="col-lg-4 col-md-6 col-12 my-2">
-                                <div class="card">
-                                    {% if post.image1 %}
-                                    <a href="{% url "blog:post" post.slug %}">
-                                        <img src="{{ post.image1.url }}" class="card-img-top" alt="{{ post.title }}">
-                                    </a>
-                                    {% else %}
-                                        <img src="{% static "images/no_image.jpg" %}" class="card-img-top">
-                                    {% endif %}
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ post.title }}</h5>
-                                        <p class="card-text">{{ post.description }}</p>
-                                        <div class="like-comment">
-                                            <i class="fa-regular fa-heart"></i>
-                                            <p class="me-4"> {{ post.likes_count }}</p>
-                                            <i class="fa-regular fa-comment"></i>
-                                            <p>0</p>
-                                        </div>
-                                        <p class="fst-italic">posted by {{ post.author }}</p>
-                                        <a href="{% url "blog:post" post.slug %}" class="btn btn-primary">view post</a>
+                        <p class="fst-italic">posted by {{ post.author }}</p>
+                        <a href="{% url "blog:post" post.slug %}" class="btn btn-primary">view post</a>
 
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
                     </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 
 {% endblock content %}
 
