@@ -1,7 +1,8 @@
 from django.urls import path
-from blog import views
 from django.contrib.auth.views import LogoutView
 from django.urls import reverse_lazy
+
+from blog import views
 
 app_name = 'blog'
 
@@ -15,4 +16,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page=reverse_lazy('blog:index')), name='logout'),
     path('profile/', views.ChangeInfoView.as_view(), name='profile'),
     path('create/', views.CreatePostView.as_view(), name='create'),
+    path('user-posts/', views.PostListView.as_view(), name='userposts'),
+    path('user-likes/', views.PostListView.as_view(), name='userlikes')
 ]

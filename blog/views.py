@@ -1,21 +1,20 @@
-
-from django.shortcuts import redirect
 from django.views.generic.base import TemplateView
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.views import View
 from django.views.generic import CreateView, DetailView, UpdateView, ListView
 from django.contrib.auth.views import LoginView
 from django.views.generic.edit import FormView
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
-from blog.forms import PostForm, UserUPdateForm
-from django.db.models import Count
+
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
+
+from django.db.models import Count
 from django.contrib import auth, messages
 
 from blog.models import Category, Post
+from blog.forms import PostForm, UserUPdateForm
 from blog.utils import search_post
 
-# Create your views here.
 
 
 class IndexView(TemplateView):
@@ -26,7 +25,6 @@ class IndexView(TemplateView):
         context['title'] = 'Nature blog - Main'
         context['categories'] = Category.objects.all()
         context['posts'] = Post.objects.all()[:3]
-        
         return context
     
 
@@ -41,34 +39,36 @@ class PostListView(ListView):
 # что же СУБД должна вычислить или, как ещё говорят, выполнить агрегацию
 # это необходимо, чтоб не запрашивать лишнее.
 # в django для получения из бд уже аггрегированных данных есть ф-ция queryset-a aggregate, 
-# его параметры - спец аггрегирующие ф-ции: Avg, Count, Max, Min
+# ее параметры - спец аггрегирующие ф-ции: Avg, Count, Max, Min
 # Процесс, при котором к каждому объекту из выборки применяется агрегирующая функция, назвается аннотированием. 
 #  .aggregate(Count('postcomment')) подсчитает количество всех комментариев,
 #  .annotate(Count('postcomment')) даст количество комментариев к каждому посту. 
 # против дублирующихся записей в бд - distinct=True
         cat_slug = self.kwargs.get('cat_slug')
-        if cat_slug == 'all':
-            posts =  Post.objects.all().annotate(likes_count=Count('likes')).select_related('author')
-        else:
-            posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author')
+        if cat_slug:
+            if cat_slug == 'all':
+                posts =  Post.objects.all().annotate(likes_count=Count('likes')).select_related('author')
+            else:
+                posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author')
 
-        order_by = self.request.GET.get('order_by', None)
         search = self.request.GET.get('q', None)
-
-        if order_by:
-            posts = posts.order_by(order_by)
         if search:
             posts = search_post(search).annotate(likes_count=Count('likes')).select_related('author')
             self.page_title = 'Search results:'
+
         if self.request.user.is_authenticated:
-            user_likes = self.request.GET.get('user_likes')
-            user_posts = self.request.GET.get('user_posts')
+            user_likes = self.request.GET.get('user_likes', None)
+            user_posts = self.request.GET.get('user_posts', None)
             if user_likes:
-                posts = posts.filter(likes__id=self.request.user.id)
+                posts = Post.objects.filter(likes__id=self.request.user.id).annotate(likes_count=Count('likes')).select_related('author')
                 self.page_title = 'Favourite posts'
             elif user_posts:
-                posts = posts.filter(author__id=self.request.user.id)
+                posts = Post.objects.filter(author__id=self.request.user.id).annotate(likes_count=Count('likes')).select_related('author')
                 self.page_title = 'My posts'
+
+        order_by = self.request.GET.get('order_by', None)
+        if order_by:
+            posts = posts.order_by(order_by)
         return posts
     
     # динамически загружающийся контент нельзя передать через extra_context,
@@ -90,7 +90,6 @@ class PostView(DetailView):
     def get_queryset(self):
         return Post.objects.select_related('author')
 
-
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             #messages.warning(self.request, 'You need to login to leave a feedback')
@@ -103,10 +102,13 @@ class PostView(DetailView):
         return redirect('blog:post', self.kwargs.get(self.slug_url_kwarg))
     
 
+
+# USER VIEWS
+
 class RegisterView(CreateView):
     template_name = 'register.html'
     form_class = UserCreationForm
-    success_url = reverse_lazy('blog:index')
+    success_url = reverse_lazy('blog:profile')
     extra_context = {'title': 'Nature Blog - register'}
 
     def form_valid(self, form):
@@ -132,7 +134,8 @@ class SinginView(LoginView):
         if not 'login' in self.request.META.get('HTTP_REFERER'):
             return self.request.META.get('HTTP_REFERER')
         return reverse_lazy('blog:index')
-    
+
+
 class ChangeInfoView(LoginRequiredMixin, UpdateView):
     template_name = 'profile.html'
     form_class = UserUPdateForm
@@ -148,11 +151,10 @@ class CreatePostView(LoginRequiredMixin, FormView):
 
     template_name = "create_post.html"
     form_class = PostForm
-    success_url = reverse_lazy('blog:index')
+    success_url = reverse_lazy('blog:profile')
     login_url = reverse_lazy('blog:login')
-
     extra_content = {
-        'title': 'New Sound - Order',
+        'title': 'Nature Blog - Create Post',
     }
 
     def form_valid(self, form):

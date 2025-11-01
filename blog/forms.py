@@ -1,7 +1,7 @@
-from unicodedata import category
 from django.contrib.auth import get_user_model
 from django.forms import ModelForm, Textarea, TextInput
 from django.contrib.auth.forms import UserChangeForm
+
 from blog.models import Post
 
 class PostForm(ModelForm):

@@ -2,23 +2,20 @@
 {% load static %}
 
 
-
 {% block content %}
-
-        <div class="container regform">
-            <h3>Registration</h3>
-            <form method="post" action="{% url "blog:register" %}">
-                {% csrf_token %}
-                {% for field in form %}
-                <div class="my-4">
-                {{ field.errors }}
-                {{ field.label_tag }} {{ field }}
-                </div>
-                {% endfor %}
-                <button type="submit" class="btn btn-primary">Register</button>
-            </form>
-        </div>
-
+    <div class="container regform">
+        <h3>Registration</h3>
+        <form method="post" action="{% url "blog:register" %}">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="my-4">
+            {{ field.errors }}
+            {{ field.label_tag }} {{ field }}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+    </div>
 {% endblock content %}
 
 
