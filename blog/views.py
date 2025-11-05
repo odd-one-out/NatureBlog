@@ -1,7 +1,8 @@
+from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic import CreateView, DetailView, UpdateView, ListView
 from django.contrib.auth.views import LoginView
-from django.views.generic.edit import FormView
+from django.views.generic.edit import FormView, DeleteView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -162,6 +163,18 @@ class CreatePostView(LoginRequiredMixin, FormView):
         post.author = self.request.user
         post.save()
         return redirect(self.success_url)
+    
+
+class DeletePostView(LoginRequiredMixin, DeleteView):
+
+    model = Post
+    slug_url_kwarg = 'post_slug'
+    template_name = 'post_confirm_delete.html'
+    success_url = reverse_lazy('blog:profile')
+    login_url = reverse_lazy('blog:login')
+    extra_content = {
+        'title': 'Nature Blog - Delete Post',
+    }
 
     
 
