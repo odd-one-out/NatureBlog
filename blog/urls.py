@@ -16,7 +16,8 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page=reverse_lazy('blog:index')), name='logout'),
     path('profile/', views.ChangeInfoView.as_view(), name='profile'),
     path('create/', views.CreatePostView.as_view(), name='create'),
-    path('delete/<pk>', views.DeletePostView.as_view(), name='deletepost'),
+    path('edit/<int:pk>', views.EditPostView.as_view(), name='editpost'),
+    path('delete/<int:pk>', views.DeletePostView.as_view(), name='deletepost'),
     path('user-posts/', views.PostListView.as_view(), name='userposts'),
     path('user-likes/', views.PostListView.as_view(), name='userlikes'),
 

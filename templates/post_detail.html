@@ -98,7 +98,8 @@
                 </div>
                 {% if user.id == post.author.id %}
                 <div class="d-flex justify-content-end">
-                    <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger flex-end">delete this post</a>
+                    <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary flex-end me-3">edit post</a>
+                    <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger flex-end">delete post</a>
                 </div>
                 {% endif %}
             </div>
@@ -106,6 +107,7 @@
         {% else %}
             <h4 class="mb-3">this post is on moderation now. It will appear here very soon)</h4>
             {% if user.id == post.author.id %}
+                <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary me-3">edit post</a>
                 <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger">delete post</a>
             {% endif %}
         {% endif %}

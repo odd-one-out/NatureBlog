@@ -165,6 +165,18 @@ class CreatePostView(LoginRequiredMixin, FormView):
         return redirect(self.success_url)
     
 
+class EditPostView(LoginRequiredMixin, UpdateView):
+
+    model = Post
+    form_class = PostForm
+    template_name = "edit_post.html"
+    success_url = reverse_lazy('blog:profile')
+    login_url = reverse_lazy('blog:login')
+    extra_content = {
+        'title': 'Nature Blog - Edit Post',
+    }
+    
+
 class DeletePostView(LoginRequiredMixin, DeleteView):
 
     model = Post
