@@ -43,7 +43,8 @@
         </div>
         <div class="container pt-3 my-2">
             <div class="card-body">
-                <p class="fs-5">{{ post.description }}</p>
+                <p>{{ post.date|date:'F, j' }}</p>
+                <p class="fs-5 mb-4">{{ post.description }}</p>
                 <p class="fst-italic">posted by {{ post.author }}</p>
 
                 <div class="d-flex flex-row align-items-center mb-3">

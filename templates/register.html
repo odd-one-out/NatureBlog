@@ -11,8 +11,13 @@
             <div class="my-4">
             {{ field.errors }}
             {{ field.label_tag }} {{ field }}
-            </div>
+            </div>           
             {% endfor %}
+            <ul>
+                <li>The password must consist of at least 8 characters.</li>
+                <li>THe password can't be entirely numeric</li>
+                <li>The password can't be too common or similar to Username</li>
+            </ul>
             <button type="submit" class="btn btn-primary">Register</button>
         </form>
     </div>

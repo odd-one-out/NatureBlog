@@ -45,7 +45,7 @@ class Post(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=STATUS, default='Checking')
     likes = models.ManyToManyField(User, related_name='user_likes', blank=True)
-    category = models.ForeignKey(Category, on_delete=models.SET('No-Category'))
+    category = models.ForeignKey(Category, on_delete=models.SET(0))
     author = models.ForeignKey(User, on_delete=models.SET(get_sentinel_user))
 
     class Meta:

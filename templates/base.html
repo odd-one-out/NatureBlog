@@ -35,7 +35,7 @@
                                 <a class="nav-link fs-5 {% if request.resolver_match.view_name == "blog:index" %}active{% endif %}" aria-current="page" href="{% url "blog:index" %}">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link fs-5" href="{% url "blog:posts" 'all' %}">Posts</a>
+                                <a class="nav-link fs-5" href="{% url "blog:allposts" %}">Posts</a>
                             </li>
                             {% if user.is_admin or user.is_superuser%}
                             <li class="nav-item">
@@ -61,7 +61,7 @@
                             {% endif %}
                         </ul>
                         <form action="{% url "blog:search" %}" class="d-flex" role="search" method="get">
-                            <input class="form-control me-2" type="search" name ='q' placeholder="Search" aria-label="Search" />
+                            <input class="form-control me-2" type="search" name ='q' placeholder="Search" aria-label="Search" required/>
                             <button class="btn btn-outline-primary" type="submit">Search</button>
                         </form>
                     </div>
@@ -69,6 +69,23 @@
             </div>
         </nav>
     </header>
+
+
+    {% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'success' %}
+            <div class="position-fixed start-50 translate-middle-x alert alert-success fade show" role="alert">{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+        {% if message.tags == 'warning' %}
+        <div class="position-fixed start-50 translate-middle-x z-1 alert alert-danger fade show" role="alert">{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}  
+    {% endfor %}
+    {% endif %}
+
 
     <main>
         <div class='wrapper'>
