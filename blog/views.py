@@ -1,4 +1,5 @@
 
+from tarfile import LinkOutsideDestinationError
 from django.views.generic.base import TemplateView
 from django.views.generic import CreateView, DetailView, UpdateView, ListView
 from django.contrib.auth.views import LoginView
@@ -25,7 +26,7 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Nature blog - Main'
         context['categories'] = Category.objects.all()
-        context['posts'] = Post.objects.all()[:3]
+        context['posts'] = Post.objects.filter(status='Published')[:3]
         return context
     
 
@@ -46,7 +47,7 @@ class PostListView(ListView):
 
         elif search:
             posts = search_post(search).annotate(likes_count=Count('likes')).select_related('author')
-            self.page_title = 'Search results:'
+            self.page_title = 'Search results'
         
         else:
             posts = Post.objects.all().annotate(likes_count=Count('likes')).select_related('author')
@@ -90,6 +91,7 @@ class PostView(DetailView):
     slug_url_kwarg = 'post_slug'
     context_object_name = 'post'
 
+
     def get_queryset(self):
         return Post.objects.select_related('author')
 
@@ -105,6 +107,12 @@ class PostView(DetailView):
             post.likes.add(request.user)
             messages.success(self.request, 'You liked this post :)')
         return redirect('blog:post', self.kwargs.get(self.slug_url_kwarg))
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        post = Post.objects.get(slug=self.kwargs.get(self.slug_url_kwarg))
+        context['liked'] = post.likes.filter(pk=self.request.user.id).exists()
+        return context
     
 
 

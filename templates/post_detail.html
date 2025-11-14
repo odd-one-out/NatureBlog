@@ -41,28 +41,34 @@
                 <span class="visually-hidden">Next</span>
             </button>
         </div>
-        <div class="container pt-3 my-2">
+        <div class="container pt-3 mb-2">
             <div class="card-body">
-                <p>{{ post.date|date:'F, j' }}</p>
-                <p class="fs-5 mb-4">{{ post.description }}</p>
+                <div class="d-flex justify-content-between"> 
+                    <p>{{ post.date|date:'F, j' }}</p>
+                     <div class="d-flex align-items-center">                   
+                    
+                        <form action="{% url 'blog:post' post.slug %}" method="post" style="width: 36px;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn">
+                                {% if liked %}
+                                <i class="fa-solid fa-heart fa-lg" style="color: red;"></i>
+                                {% else %}
+                                <i class="fa-regular fa-heart fa-lg"></i>
+                                {% endif %}
+                            </button>                   
+                        </form>
+                        <p class="me-4"> {{ post.likes.count }}</p>
+                        
+                        <i class="fa-regular fa-comment"></i>
+                        <p>0</p>
+                    </div>
+                </div>
+                <p class="fs-5 mb-2">{{ post.description }}</p>
                 <p class="fst-italic">posted by {{ post.author }}</p>
 
-                <div class="d-flex flex-row align-items-center mb-3">
 
-                    <form action="{% url 'blog:post' post.slug %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-primary me-5"><i
-                            class="fa-regular fa-heart me-2"></i>like post
-                    </button>
-                    </form>
-                    
-                    <i class="fa-regular fa-heart"></i>
-                    <p class="me-4"> {{ post.likes.count }}</p>
-                    <i class="fa-regular fa-comment"></i>
-                    <p>0</p>
-                </div>
                 <form>
-                    <div class="d-flex flex-row">
+                    <div class="d-flex flex-row mt-4">
                         <input class="form-control me-2" type="text" placeholder="Add a comment" />
                         <button class="btn btn-primary" type="submit">Comment</button>
                     </div>

@@ -5,11 +5,12 @@
 {% block content %}
     <div class="col-12">
         {% if category %}
-        <h4 class="my-3 text-center">{{ category.name }} - {{ posts|length }} posts</h4>
-        <p class="text-center">{{ category.description }}</p>
+        <h4 class="my-3 text-center">{{ category.name }} - {{ posts|length }} {% if posts|length == 1 %}post{% else %}posts{% endif %}</h4>
+        <p class="text-center mb-md-0">{{ category.description }}</p>
         {% else %}
-        <h4 class="my-3 text-center">{{ page_title }} - {{ posts|length }} posts</h4>
+        <h4 class="my-3 text-center">{{ page_title }} - {{ posts|length }} {% if posts|length == 1 %}post{% else %}posts{% endif %}</h4>
         {% endif %}
+
         <div class="d-flex justify-content-end">
             <a class="btn btn-outline-primary btn-lg" href="{% url "blog:create" %}">+ add post</a>
         </div>
