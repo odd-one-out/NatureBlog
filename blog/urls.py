@@ -4,6 +4,8 @@ from django.urls import reverse_lazy
 
 from blog import views
 
+from django.contrib.auth import views as auth_views
+
 app_name = 'blog'
 
 urlpatterns = [
@@ -21,5 +23,27 @@ urlpatterns = [
     path('delete/<int:pk>', views.DeletePostView.as_view(), name='deletepost'),
     path('user-posts/', views.UserPostsView.as_view(), name='userposts'),
     path('user-likes/', views.UserLikesView.as_view(), name='userlikes'),
+
+    # reset password paths and views
+    path('password_reset/', auth_views.PasswordResetView.as_view(
+        template_name='pass_reset_form.html',
+        success_url=reverse_lazy('blog:password_reset_done'),
+        email_template_name='password_email.html'
+        ),
+        name='password_reset'),
+    path('password_reset_done/', auth_views.PasswordResetDoneView.as_view(
+        template_name='pass_reset_sent.html'
+        ),
+        name='password_reset_done'),
+    path('password_reset_confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
+        template_name='pass_reset_confirm.html',
+        success_url=reverse_lazy('blog:password_reset_complete')
+        ),
+        name='password_reset_confirm'),
+    path('password_reset_complete/', auth_views.PasswordResetCompleteView.as_view(
+        template_name='pass_reset_complete.html'
+        ),
+        name='password_reset_complete'),
+
 
 ]
