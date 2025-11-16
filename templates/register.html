@@ -3,7 +3,7 @@
 
 
 {% block content %}
-    <div class="container regform">
+    <div class="container regform mx-auto">
         <h3>Registration</h3>
         <form method="post" action="{% url "blog:register" %}">
             {% csrf_token %}
@@ -15,7 +15,7 @@
             {% endfor %}
             <ul>
                 <li>The password must consist of at least 8 characters.</li>
-                <li>THe password can't be entirely numeric</li>
+                <li>The password can't be entirely numeric</li>
                 <li>The password can't be too common or similar to Username</li>
             </ul>
             <button type="submit" class="btn btn-primary">Register</button>

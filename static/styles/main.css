@@ -14,7 +14,7 @@ main {
 
 .wrapper {
     margin-inline: auto;
-    margin-top: 2rem;
+    margin-top: 1rem;
     margin-bottom: 2rem;
     min-height: 100%;
     width: 70vw;
@@ -71,24 +71,34 @@ footer {
 
 /* class only for login.html and register.html */
 .regform {
-    background-color: rgb(231, 231, 231);
-    border: 5px groove rgb(180, 180, 180);
+    background-color: #f8f9fa;
     border-radius: 15px;
+    box-shadow: 0px -5px 10px 0px rgba(0, 0, 0, 0.5);
     padding: 2rem;
     margin-top: 2rem;
+    margin-inline: 0.5rem;
+    max-width: 800px;
 
 }
 
 
 @media(max-width: 1200px) {
     .wrapper {
-    width: 80vw;
+        width: 80vw;
     }
 }
 
 @media(max-width: 992px) {
     .wrapper {
-    width: 90vw;
+        width: 90vw;
+    }
+
+    .carousel-item.detail {
+        height: 500px;
+    }
+
+    .regform {
+        max-width: 600px;
     }
 
     .footer {
@@ -100,5 +110,13 @@ footer {
 @media(max-width: 576px) {
     .carousel-item.detail {
         height: 400px;
+    }
+
+    .card>a>img, .card>img {
+        height: 45vh;
+    }
+
+    .regform {
+        width: 85vw;
     }
 }

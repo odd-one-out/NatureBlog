@@ -5,50 +5,51 @@
 {% block content %}
     <div class="col-12">
         {% if category %}
-        <h4 class="my-3 text-center">{{ category.name }} - {{ posts|length }} {% if posts|length == 1 %}post{% else %}posts{% endif %}</h4>
+        <h4 class="text-center">{{ category.name }} - {{ posts|length }} {% if posts|length == 1 %}post{% else %}posts{% endif %}</h4>
         <p class="text-center mb-md-0">{{ category.description }}</p>
         {% else %}
-        <h4 class="my-3 text-center">{{ page_title }} - {{ posts|length }} {% if posts|length == 1 %}post{% else %}posts{% endif %}</h4>
+        <h4 class="text-center">{{ page_title }} - {{ posts|length }} {% if posts|length == 1 %}post{% else %}posts{% endif %}</h4>
         {% endif %}
 
-        <div class="d-flex justify-content-end">
-            <a class="btn btn-outline-primary btn-lg" href="{% url "blog:create" %}">+ add post</a>
-        </div>
-
+        
         {% if posts %}
-        <div class="dropdown dropend mb-2">
-            <a class="btn btn-lg dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+        <div class="d-flex justify-content-between">
+            <div class="dropdown dropend">
+                <a class="btn dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                 aria-expanded="false">Sort by
-            </a>
-            <ul class="dropdown-menu">
-                <form action="{% if request.GET.q %}{% url "blog:search" %}
-                              {% elif cat_slug %}{% url "blog:posts" cat_slug %}
-                              {% else %}{% url "blog:allposts" %}
-                              {% endif %}" method="get">
-                    {% if request.GET.q %}
-                    <input type="hidden" name="q" value="{{ request.GET.q }}">
-                    {% endif %}
-                    <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                        id="flexRadioDefault1" value="date" {% if request.GET.order_by == 'date' %}checked{% endif %}>
-                        <label class="form-check-label ms-2" for="flexRadioDefault1">Oldest first</label>
-                    </li>
-                    <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                        id="flexRadioDefault1" value="-date" {% if request.GET.order_by == '-date' %}checked{% endif %}>
-                        <label class="form-check-label ms-2" for="flexRadioDefault1">Latest first</label>
-                    </li>
-                    <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                        id="flexRadioDefault1" value="-likes_count" {% if request.GET.order_by == '-likes_count' %}checked{% endif %}>
-                        <label class="form-check-label ms-2" for="flexRadioDefault1">Likes</label>
-                    </li>
+                </a>
+                <ul class="dropdown-menu">
+                    <form action="{% if request.GET.q %}{% url "blog:search" %}
+                        {% elif cat_slug %}{% url "blog:posts" cat_slug %}
+                        {% else %}{% url "blog:allposts" %}
+                        {% endif %}" method="get">
+                        {% if request.GET.q %}
+                        <input type="hidden" name="q" value="{{ request.GET.q }}">
+                        {% endif %}
+                        <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
+                            id="flexRadioDefault1" value="date" {% if request.GET.order_by == 'date' %}checked{% endif %}>
+                            <label class="form-check-label ms-2" for="flexRadioDefault1">Oldest first</label>
+                        </li>
+                        <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
+                            id="flexRadioDefault1" value="-date" {% if request.GET.order_by == '-date' %}checked{% endif %}>
+                            <label class="form-check-label ms-2" for="flexRadioDefault1">Latest first</label>
+                        </li>
+                        <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
+                            id="flexRadioDefault1" value="-likes_count" {% if request.GET.order_by == '-likes_count' %}checked{% endif %}>
+                            <label class="form-check-label ms-2" for="flexRadioDefault1">Likes</label>
+                        </li>
                         <li class="dropdown-item disabled fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                        id="flexRadioDefault1" value="likes" {% if request.GET.order_by == 'likes' %}checked{% endif %}>
-                        <label class="form-check-label ms-2" for="flexRadioDefault1">Comments</label>
-                    </li>     
-                    <li class="dropdown-item fs-5">
-                        <button type="submit" class="btn btn-primary">Apply</button>
-                    </li>
-                </form>
-            </ul>
+                            id="flexRadioDefault1" value="likes" {% if request.GET.order_by == 'likes' %}checked{% endif %}>
+                            <label class="form-check-label ms-2" for="flexRadioDefault1">Comments</label>
+                        </li>     
+                        <li class="dropdown-item fs-5">
+                            <button type="submit" class="btn btn-primary">Apply</button>
+                        </li>
+                    </form>
+                </ul>
+            </div>
+    
+            <a href="{% url "blog:create" %}" class="btn btn-outline-primary">+ add post</a>       
         </div>
         {% endif %}
 
