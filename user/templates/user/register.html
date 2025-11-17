@@ -5,7 +5,7 @@
 {% block content %}
     <div class="container regform mx-auto">
         <h3>Registration</h3>
-        <form method="post" action="{% url "blog:register" %}">
+        <form method="post" action="{% url "user:register" %}">
             {% csrf_token %}
             {% for field in form %}
             <div class="my-4">

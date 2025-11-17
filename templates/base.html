@@ -18,6 +18,7 @@
     <header>
         <nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
             <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">Nature Blog</span>
                 <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas"
                     data-bs-target="#navbarOffcanvasLg" aria-controls="navbarOffcanvasLg"
                     aria-label="Toggle navigation">
@@ -46,17 +47,17 @@
                         <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
                             {% if  user.is_authenticated %}
                             <li class="nav-item d-flex">
-                                <a class="nav-link fs-5" href="{% url "blog:profile" %}"><i class="fa-regular fa-user me-1"></i>{{user.username}}</a>
+                                <a class="nav-link fs-5" href="{% url "user:profile" %}"><i class="fa-regular fa-user me-1"></i>{{user.username}}</a>
                             </li>
                             <li class="nav-item d-flex">
-                                <form action="{% url 'blog:logout' %}" method="post">
+                                <form action="{% url 'user:logout' %}" method="post">
                                 {% csrf_token %}
                                 <button type="submit" class="nav-link fs-5">Log Out</button>
                                 </form>
                             </li>
                             {% else %}
                             <li class="nav-item d-flex">
-                                <a class="nav-link fs-5" href="{% url "blog:login" %}">Log in</a>
+                                <a class="nav-link fs-5" href="{% url "user:login" %}">Log in</a>
                             </li>
                             {% endif %}
                         </ul>

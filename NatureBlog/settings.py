@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import sys
 import os
+from django.conf.global_settings import LOGIN_URL
 from dotenv import load_dotenv # это модуль для загрузки переменных окружения из файла .env - там вся секретная инфа
 load_dotenv()
 
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
 
     'blog',
+    'user'
 ]
 
 MIDDLEWARE = [
@@ -164,3 +166,5 @@ INTERNAL_IPS = [
 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = BASE_DIR / 'emails'
+
+LOGIN_URL = '/login/'

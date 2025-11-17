@@ -29,7 +29,7 @@
                     {% endif %}
                     <div class="carousel-caption d-none d-md-block">
                         <h5>{{ p.title }}</h5>
-                        <p>{{ p.description }}</p>
+                        <p>{{ p.description|truncatechars:50 }}</p>
                     </div>
                 </div>
                 {% endfor %}

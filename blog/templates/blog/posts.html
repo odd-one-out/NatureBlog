@@ -55,7 +55,7 @@
 
         <div class="row">
             {% for post in posts %}
-                {% include "card.html" %}
+                {% include "blog/card.html" %}
             {% empty %}
                 <h4 class="text-center">{{ empty_text }}</h4>
             {% endfor %}

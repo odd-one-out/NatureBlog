@@ -24,7 +24,8 @@ from NatureBlog import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('blog.urls', namespace='blog'))
+    path('', include('blog.urls', namespace='blog')),
+    path('', include('user.urls', namespace='user'))
 ]
 
 

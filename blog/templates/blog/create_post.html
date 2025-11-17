@@ -9,7 +9,7 @@
             {% csrf_token %}
             {% for field in form %}
             <div class="my-4">
-            {{ field.errors }}
+            <div class="fw-bold" style="color:red;">{{ field.errors }}</div>
             {{ field.label_tag }} {{ field }}
             </div>
             {% endfor %}

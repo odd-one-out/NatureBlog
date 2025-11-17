@@ -15,7 +15,7 @@
                 </div>
                 <div class="card-footer mt-3">
                     <p>Info:</p>
-                    <form method="post" action="{% url "blog:profile" %}">
+                    <form method="post" action="{% url "user:profile" %}">
                         {% csrf_token %}
                         {% for field in form %}
                         <div class="my-4">

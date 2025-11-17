@@ -1,26 +1,22 @@
-
-from tarfile import LinkOutsideDestinationError
 from django.views.generic.base import TemplateView
-from django.views.generic import CreateView, DetailView, UpdateView, ListView
-from django.contrib.auth.views import LoginView
+from django.views.generic import DetailView, UpdateView, ListView
 from django.views.generic.edit import FormView, DeleteView
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 
 from django.db.models import Count
-from django.contrib import auth, messages
+from django.contrib import messages
 
 from blog.models import Category, Post
-from blog.forms import PostForm, UserUPdateForm
+from blog.forms import PostForm
 from blog.utils import search_post
 
 
 
 class IndexView(TemplateView):
-    template_name = 'index.html'
+    template_name = 'blog/index.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -33,7 +29,7 @@ class IndexView(TemplateView):
    
 
 class PostListView(ListView):
-    template_name = 'posts.html'
+    template_name = 'blog/posts.html'
     #model = Post так выбирутся все товары из бд, т. к. это тоже, что и Post.objects.all()
     context_object_name = 'posts'
     page_title = None
@@ -87,7 +83,7 @@ class PostListView(ListView):
     
 
 class PostView(DetailView):
-    template_name = 'post_detail.html'
+    template_name = 'blog/post_detail.html'
     slug_url_kwarg = 'post_slug'
     context_object_name = 'post'
 
@@ -111,62 +107,19 @@ class PostView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         post = Post.objects.get(slug=self.kwargs.get(self.slug_url_kwarg))
+        context['title'] = str(post)
         context['liked'] = post.likes.filter(pk=self.request.user.id).exists()
         return context
     
 
-
-# USER VIEWS
-
-class RegisterView(CreateView):
-    template_name = 'register.html'
-    form_class = UserCreationForm
-    success_url = reverse_lazy('blog:profile')
-    extra_context = {'title': 'Nature Blog - register'}
-
-    def form_valid(self, form):
-        user = form.instance
-        if user:
-            form.save()
-            auth.login(self.request, user) # сразу логиним юзера после успешной регистрации
-            
-            # тут какая то лажа, это сообщение выводится в админке при логине
-            messages.success(self.request, f'Hi, {user.username}! You\'re registered successfully')
-            return redirect(self.success_url)
-        
-
-class SinginView(LoginView):
-    template_name = 'login.html'
-    form_class = AuthenticationForm
-    extra_context = {'title': 'Nature blog - login'}
-
-    # по дефолту django перенаправляет на accounts/profile, переопределяем это:
-    def get_default_redirect_url(self):
-        if self.request.POST.get('next', None):
-                return self.request.POST.get('next')
-        if not 'login' in self.request.META.get('HTTP_REFERER'):
-            return self.request.META.get('HTTP_REFERER')
-        return reverse_lazy('blog:index')
-
-
-class ChangeInfoView(LoginRequiredMixin, UpdateView):
-    template_name = 'profile.html'
-    form_class = UserUPdateForm
-    success_url = reverse_lazy('blog:profile')
-    extra_context = {'title': 'Nature Blog - profile'}
-    login_url = reverse_lazy('blog:login')
-
-    def get_object(self, queryset=None):
-        return self.request.user
-    
+ #USER POSTs VIEWS    
 
 class CreatePostView(LoginRequiredMixin, FormView):
 
-    template_name = "create_post.html"
+    template_name = "blog/create_post.html"
     form_class = PostForm
-    success_url = reverse_lazy('blog:profile')
-    login_url = reverse_lazy('blog:login')
-    extra_content = {
+    success_url = reverse_lazy('user:profile')
+    extra_context = {
         'title': 'Nature Blog - Create Post',
     }
 
@@ -178,16 +131,13 @@ class CreatePostView(LoginRequiredMixin, FormView):
         return redirect(self.success_url)
     
 
- #USER POSTs VIEWS
-
 class EditPostView(LoginRequiredMixin, UpdateView):
 
     model = Post
     form_class = PostForm
-    template_name = "edit_post.html"
-    success_url = reverse_lazy('blog:profile')
-    login_url = reverse_lazy('blog:login')
-    extra_content = {
+    template_name = "blog/edit_post.html"
+    success_url = reverse_lazy('user:profile')
+    extra_context = {
         'title': 'Nature Blog - Edit Post',
     }
     
@@ -196,19 +146,17 @@ class DeletePostView(LoginRequiredMixin, DeleteView):
 
     model = Post
     slug_url_kwarg = 'post_slug'
-    template_name = 'post_confirm_delete.html'
-    success_url = reverse_lazy('blog:profile')
-    login_url = reverse_lazy('blog:login')
-    extra_content = {
+    template_name = 'blog/post_confirm_delete.html'
+    success_url = reverse_lazy('user:profile')
+    extra_context = {
         'title': 'Nature Blog - Delete Post',
     }
 
 
 class UserPostsView(LoginRequiredMixin, ListView):
 
-    template_name = 'user_posts_and_likes.html'
+    template_name = 'blog/user_posts_and_likes.html'
     context_object_name = 'posts'
-    login_url = reverse_lazy('blog:login')
 
     def get_queryset(self):
         return Post.objects.filter(author=self.request.user).annotate(likes_count=Count('likes')).select_related('author')
@@ -223,9 +171,8 @@ class UserPostsView(LoginRequiredMixin, ListView):
 
 class UserLikesView(LoginRequiredMixin, ListView):
 
-    template_name = 'user_posts_and_likes.html'
+    template_name = 'blog/user_posts_and_likes.html'
     context_object_name = 'posts'
-    login_url = reverse_lazy('blog:login')
 
     def get_queryset(self):
         return Post.objects.annotate(likes_count=Count('likes')).filter(likes__id=self.request.user.id).select_related('author')
