@@ -60,6 +60,35 @@ class Post(models.Model):
         super().save(*args, **kwargs)
 
 
+class Comment(models.Model):
+    '''Comment to post'''
+    text = models.TextField(max_length=300)
+    date = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
-    
+    class Meta:
+        ordering = ['-date']
+
+    def __str__(self):
+        return f'comment by {self.user} to "{self.post}"'
+
+    def show_date(self):
+        """converts date object to string that shows how long ago user commented"""
+        
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        now_time = datetime.now(ZoneInfo("UTC"))
+        diff = now_time-self.date #timedelta object
+        if diff.days:
+            return f'{diff.days} days ago' if diff.days>1 else f'{diff.days} day ago'
+        else:
+            hours = round(diff.seconds/3600)
+            minutes = round(diff.seconds/60)
+            if hours:
+                return f'{hours} hours ago' if hours>1 else f'{hours} hour ago'
+            elif minutes and not hours:
+                return f'{minutes} minutes ago' if minutes>1 else f'{minutes} minute ago'
+            else:
+                return f'{diff.seconds} seconds ago'
 

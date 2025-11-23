@@ -11,7 +11,7 @@
                     <a href="{% url "blog:create" %}" class="list-group-item list-group-item-action">Add post</a>
                     <a href="{% url "blog:userposts" %}" class="list-group-item list-group-item-action">My posts</a>
                     <a href="{% url "blog:userlikes" %}" class="list-group-item list-group-item-action">Favourite posts</a>
-                    <a href="#" class="list-group-item list-group-item-action disabled">My comments</a>
+                    <a href="{% url "blog:usercomments" %}" class="list-group-item list-group-item-action">My comments</a>
                 </div>
                 <div class="card-footer mt-3">
                     <p>Info:</p>

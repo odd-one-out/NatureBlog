@@ -1,7 +1,10 @@
+from django.forms import ValidationError
 from django.views.generic.base import TemplateView
 from django.views.generic import DetailView, UpdateView, ListView
 from django.views.generic.edit import FormView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.contrib.messages.views import SuccessMessageMixin
 
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
@@ -9,13 +12,14 @@ from django.urls import reverse_lazy
 from django.db.models import Count
 from django.contrib import messages
 
-from blog.models import Category, Post
-from blog.forms import PostForm
+from blog.models import Category, Post, Comment
+from blog.forms import PostForm, CommentForm
 from blog.utils import search_post
 
 
 
 class IndexView(TemplateView):
+
     template_name = 'blog/index.html'
 
     def get_context_data(self, **kwargs):
@@ -26,9 +30,8 @@ class IndexView(TemplateView):
         return context
     
 
-   
-
 class PostListView(ListView):
+
     template_name = 'blog/posts.html'
     #model = Post так выбирутся все товары из бд, т. к. это тоже, что и Post.objects.all()
     context_object_name = 'posts'
@@ -39,14 +42,14 @@ class PostListView(ListView):
         cat_slug = self.kwargs.get('cat_slug')
         search = self.request.GET.get('q', None)
         if cat_slug:
-            posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author')
+            posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
 
         elif search:
-            posts = search_post(search).annotate(likes_count=Count('likes')).select_related('author')
+            posts = search_post(search).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
             self.page_title = 'Search results'
         
         else:
-            posts = Post.objects.all().annotate(likes_count=Count('likes')).select_related('author')
+            posts = Post.objects.all().annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
             self.page_title = 'All Posts'
 
         order_by = self.request.GET.get('order_by', None)
@@ -83,33 +86,51 @@ class PostListView(ListView):
     
 
 class PostView(DetailView):
+
     template_name = 'blog/post_detail.html'
     slug_url_kwarg = 'post_slug'
     context_object_name = 'post'
-
 
     def get_queryset(self):
         return Post.objects.select_related('author')
 
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            #messages.warning(self.request, 'You need to login to leave a feedback')
-            return redirect('blog:login')
+            messages.warning(request, 'Please, log in to leave a comment')
+            return redirect('user:login')
+        
         post = Post.objects.get(slug=self.kwargs.get(self.slug_url_kwarg))
-        if post.likes.filter(pk=request.user.id).exists():
-            post.likes.remove(request.user.id)
-            messages.success(self.request, 'You unliked this post :(')
-        else:
-            post.likes.add(request.user)
-            messages.success(self.request, 'You liked this post :)')
+
+        if 'submit-comment' in request.POST:
+            comment_form = CommentForm(request.POST)
+            if comment_form.is_valid():
+                text = comment_form.cleaned_data['text']
+                try:
+                    Comment.objects.create(text=text, user=request.user, post=post)
+                    messages.success(request, 'Your comment is added)')
+                except ValidationError:
+                    messages.error(request, 'unable to create post - validation error')
+                except (TypeError, ValueError):
+                    messages.error(request, 'unable to create post - wrong data')
+
+        elif 'submit-like' in request.POST:
+            if post.likes.filter(pk=request.user.id).exists():
+                post.likes.remove(request.user.id)
+                messages.success(request, 'You unliked this post :(')
+            else:
+                post.likes.add(request.user)
+                messages.success(request, 'You liked this post :)')
         return redirect('blog:post', self.kwargs.get(self.slug_url_kwarg))
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        post = Post.objects.get(slug=self.kwargs.get(self.slug_url_kwarg))
-        context['title'] = str(post)
-        context['liked'] = post.likes.filter(pk=self.request.user.id).exists()
+        #post = Post.objects.get(slug=self.kwargs.get(self.slug_url_kwarg))
+        context['title'] = str(self.object)
+        context['liked'] = self.object.likes.filter(pk=self.request.user.id).exists()
+        context['comment_form'] = CommentForm()
+        context['comments'] = Comment.objects.filter(post=self.object).select_related('user').only('text', 'date', 'user__username')
         return context
+    
     
 
  #USER POSTs VIEWS    
@@ -137,20 +158,32 @@ class EditPostView(LoginRequiredMixin, UpdateView):
     form_class = PostForm
     template_name = "blog/edit_post.html"
     success_url = reverse_lazy('user:profile')
+    success_message = 'your post was edited successfully'
     extra_context = {
         'title': 'Nature Blog - Edit Post',
     }
     
 
-class DeletePostView(LoginRequiredMixin, DeleteView):
+class DeletePostView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
 
     model = Post
     slug_url_kwarg = 'post_slug'
     template_name = 'blog/post_confirm_delete.html'
     success_url = reverse_lazy('user:profile')
+    success_message = 'your post was deleted'
     extra_context = {
         'title': 'Nature Blog - Delete Post',
     }
+
+@login_required
+def delete_comment(request, comment_id):
+    try:
+        comment = Comment.objects.get(pk=comment_id)
+        comment.delete()
+        messages.success(request, f'{comment} is deleted')
+    except Comment.DoesNotExist:
+        messages.error(request, f'{comment} not found')
+    return redirect(request.META.get('HTTP_REFERER'))
 
 
 class UserPostsView(LoginRequiredMixin, ListView):
@@ -159,7 +192,7 @@ class UserPostsView(LoginRequiredMixin, ListView):
     context_object_name = 'posts'
 
     def get_queryset(self):
-        return Post.objects.filter(author=self.request.user).annotate(likes_count=Count('likes')).select_related('author')
+        return Post.objects.filter(author=self.request.user).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -175,7 +208,7 @@ class UserLikesView(LoginRequiredMixin, ListView):
     context_object_name = 'posts'
 
     def get_queryset(self):
-        return Post.objects.annotate(likes_count=Count('likes')).filter(likes__id=self.request.user.id).select_related('author')
+        return Post.objects.annotate(likes_count=Count('likes')).filter(likes__id=self.request.user.id).select_related('author').prefetch_related('comment_set')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -184,3 +217,17 @@ class UserLikesView(LoginRequiredMixin, ListView):
         context['name'] = 'Favourite posts'
         return context
 
+
+class UserCommentsView(LoginRequiredMixin, ListView):
+
+    template_name = 'blog/user_comments.html'
+    context_object_name = 'comments'
+    extra_context = {'title': 'Nature Blog - My Comments'}
+
+    def get_queryset(self):
+        return Comment.objects.filter(user=self.request.user).select_related('post').only('date', 'text', 'post__title', 'post__slug')
+    
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     context['title'] =  'Nature Blog - My Comments'
+    #     return context

@@ -49,7 +49,7 @@
                     
                         <form action="{% url 'blog:post' post.slug %}" method="post" style="width: 36px;">
                             {% csrf_token %}
-                            <button type="submit" class="btn">
+                            <button type="submit" class="btn" name="submit-like">
                                 {% if liked %}
                                 <i class="fa-solid fa-heart fa-lg" style="color: red;"></i>
                                 {% else %}
@@ -60,49 +60,39 @@
                         <p class="me-4"> {{ post.likes.count }}</p>
                         
                         <i class="fa-regular fa-comment"></i>
-                        <p>0</p>
+                        <p>{{ comments|length }}</p>
                     </div>
                 </div>
                 <p class="fs-5 mb-2">{{ post.description }}</p>
                 <p class="fst-italic">posted by {{ post.author }}</p>
 
-
-                <form>
+                <form action="{% url 'blog:post' post.slug %}" method="post">
                     <div class="d-flex flex-row mt-4">
-                        <input class="form-control me-2" type="text" placeholder="Add a comment" />
-                        <button class="btn btn-primary" type="submit">Comment</button>
+                        {% csrf_token %}
+                        {{ comment_form.text }}
+                        {{ comment_form.text.errors}}
+                        <button class="btn btn-primary ms-2" type="submit" name="submit-comment">Comment</button>
                     </div>
                 </form>
+
                 <div class="mt-4">
                     <p class="fs-5 mt-2">Comments:</p>
+                    {% for comment in comments  %}
                     <div class="my-3">
-                        <div class="d-flex flex-row align-items-center">
-                            <span class=" fw-semibold me-3">Kir Surname</span>
-                            <span class="fst-italic">4 hours ago</span>
+                        <div class="d-flex align-items-center">
+                            <span class=" fw-semibold me-3">{{ comment.user.username }}</span>
+                            <span class="fst-italic">{{ comment.show_date }}</span>
                         </div>
-                        <p class="card-text">Some quick example text to build on the card title and make
-                            up
-                            the bulk of the card’s content. Lorem ipsum dolor, sit amet consectetur adipisicing elit. Nostrum at accusamus provident! Doloremque earum enim suscipit, vero quam blanditiis laudantium incidunt aliquid iusto sed culpa libero veritatis alias molestiae mollitia.</p>
+                        <p class="card-text mb-0">{{ comment.text }}
+                        {% if user.username == comment.user.username %}
+                        <a href="{% url "blog:delete_comment" comment.id %}" class="btn btn-outline-danger ms-2"
+                             style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">delete</a>
+                        {% endif %}
+                        </p>
                     </div>
-                    <div class="my-3">
-                        <div class="d-flex flex-row align-items-center">
-                            <span class=" fw-semibold me-3">Kir Surname</span>
-                            <span class="fst-italic">4 hours ago</span>
-                        </div>
-                        <p class="card-text">Some quick example text to build on the card title and make
-                            up
-                            the bulk of the card’s content.</p>
-                    </div>
-                    <div class="my-3">
-                        <div class="d-flex flex-row align-items-center">
-                            <span class=" fw-semibold me-3">Kir Surname</span>
-                            <span class="fst-italic">4 hours ago</span>
-                        </div>
-                        <p class="card-text">Some quick example text to build on the card title and make
-                            up
-                            the bulk of the card’s content.</p>
-                    </div>
+                    {% endfor %}
                 </div>
+
                 {% if user.id == post.author.id %}
                 <div class="d-flex justify-content-end">
                     <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary flex-end me-3">edit post</a>
@@ -112,11 +102,11 @@
             </div>
         </div>
         {% else %}
-            <h4 class="mb-3">this post is on moderation now. It will appear here very soon)</h4>
-            {% if user.id == post.author.id %}
-                <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary me-3">edit post</a>
-                <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger">delete post</a>
-            {% endif %}
+        <h4 class="mb-3">post {{ post.id }} is on moderation now. It will appear here very soon)</h4>
+        {% if user.id == post.author.id %}
+            <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary me-3">edit post</a>
+            <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger">delete post</a>
+        {% endif %}
         {% endif %}
     </div>
 {% endblock content %}
