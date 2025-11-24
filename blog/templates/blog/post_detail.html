@@ -81,13 +81,12 @@
                     <div class="my-3">
                         <div class="d-flex align-items-center">
                             <span class=" fw-semibold me-3">{{ comment.user.username }}</span>
-                            <span class="fst-italic">{{ comment.show_date }}</span>
+                            <span class="fst-italic me-3">{{ comment.show_date }}</span>
+                            {% if user.username == comment.user.username %}
+                                 <a href="{% url "blog:delete_comment" comment.id %}"><i class="fa-solid fa-xmark" style="color: #E01305;"></i></a>
+                            {% endif %}
                         </div>
                         <p class="card-text mb-0">{{ comment.text }}
-                        {% if user.username == comment.user.username %}
-                        <a href="{% url "blog:delete_comment" comment.id %}" class="btn btn-outline-danger ms-2"
-                             style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;">delete</a>
-                        {% endif %}
                         </p>
                     </div>
                     {% endfor %}

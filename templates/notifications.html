@@ -1,0 +1,16 @@
+{% load static %}
+
+{% if messages %}
+{% for message in messages %}
+    {% if message.tags == 'success' %}
+        <div class="position-fixed start-50 translate-middle-x mt-4 z-1 alert alert-success alert-dismissible fade show" role="alert">{{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+    {% if message.tags == 'warning' %}
+    <div class="position-fixed start-50 translate-middle-x mt-4 z-1 alert alert-danger alert-dismissible fade show" role="alert">{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %} 
+{% endfor %}
+{% endif %}

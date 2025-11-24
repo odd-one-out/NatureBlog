@@ -24,6 +24,14 @@
                     <a href="{% url "blog:post" p.slug %}">
                         <img src="{{ p.image1.url }}" class="d-block w-100" alt="{{ p.title }}">
                     </a>
+                    {% elif p.image2 %}
+                    <a href="{% url "blog:post" p.slug %}">
+                        <img src="{{ p.image2.url }}" class="d-block w-100" alt="{{ p.title }}">
+                    </a>
+                    {% elif p.image3 %}
+                    <a href="{% url "blog:post" p.slug %}">
+                        <img src="{{ p.image3.url }}" class="d-block w-100" alt="{{ p.title }}">
+                    </a>
                     {% else %}
                     <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
                     {% endif %}

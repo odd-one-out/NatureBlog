@@ -10,12 +10,14 @@
         <li class="list-group-item">
             <div class="p-3">
                 <p class="card-text">{{ comment.text }}</p>
-                <div class="d-flex flex-column flex-lg-row justify-content-between">
+                <div class="d-flex flex-column flex-md-row justify-content-between">
                     <p>
                         <span class="fst-italic me-2">{{ comment.date|date:'M j - Y' }},</span>
                         <span class="fst-italic">to post - <a href="{% url "blog:post" comment.post.slug %}">{{ comment.post.title }}</a></span>
                     </p>
-                    <a href="{% url "blog:delete_comment" comment.id %}"><i class="fa-solid fa-trash fa-lg"></i></a>
+                    <p>
+                        <a href="{% url "blog:delete_comment" comment.id %}"><i class="fa-solid fa-xmark" style="color: #E01305;"></i></a>
+                    </p>
                 </div>
             </div>
         </li>

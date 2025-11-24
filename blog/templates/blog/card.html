@@ -8,6 +8,14 @@
         <a href="{% url "blog:post" post.slug %}">
             <img src="{{ post.image1.url }}" class="card-img-top" alt="{{ post.title }}">
         </a>
+        {% elif post.image2 %}
+        <a href="{% url "blog:post" post.slug %}">
+            <img src="{{ post.image2.url }}" class="card-img-top" alt="{{ post.title }}">
+        </a>
+        {% elif post.image3 %}
+        <a href="{% url "blog:post" post.slug %}">
+            <img src="{{ post.image3.url }}" class="card-img-top" alt="{{ post.title }}">
+        </a>
         {% else %}
             <img src="{% static "images/no_image.jpg" %}" class="card-img-top">
         {% endif %}

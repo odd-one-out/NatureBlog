@@ -162,6 +162,12 @@ class EditPostView(LoginRequiredMixin, UpdateView):
     extra_context = {
         'title': 'Nature Blog - Edit Post',
     }
+
+    def form_valid(self, form):
+        post = form.save(commit=False)
+        post.status = 'Checking'
+        post.save()
+        return redirect(self.success_url)
     
 
 class DeletePostView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):

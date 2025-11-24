@@ -27,7 +27,7 @@ class RegisterView(CreateView):
             return redirect(self.success_url)
         
 
-class SinginView(LoginView):
+class UserLoginView(LoginView):
     template_name = 'user/login.html'
     form_class = AuthenticationForm
     extra_context = {'title': 'Nature blog - login'}

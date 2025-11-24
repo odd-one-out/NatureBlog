@@ -16,9 +16,9 @@
 
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
+        <nav class="navbar navbar-expand-lg fixed-top">
             <div class="container-fluid">
-                <span class="navbar-brand mb-0 h1">Nature Blog</span>
+                <a href="{% url "blog:index" %}" class="navbar-brand mb-0 h1">Nature<br> Blog</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas"
                     data-bs-target="#navbarOffcanvasLg" aria-controls="navbarOffcanvasLg"
                     aria-label="Toggle navigation">
@@ -33,10 +33,12 @@
                     <div class="offcanvas-body">
                         <ul class="navbar-nav justify-content-start flex-grow-1 pe-3">
                             <li class="nav-item">
-                                <a class="nav-link fs-5 {% if request.resolver_match.view_name == "blog:index" %}active{% endif %}" aria-current="page" href="{% url "blog:index" %}">Home</a>
+                                <a class="nav-link fs-5 {% if request.resolver_match.view_name == "blog:index" %}active{% endif %}" aria-current="page"
+                                 href="{% url "blog:index" %}">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link fs-5" href="{% url "blog:allposts" %}">Posts</a>
+                                <a class="nav-link fs-5 {% if request.resolver_match.view_name == "blog:allposts" %}active{% endif %}"
+                                 href="{% url "blog:allposts" %}">Posts</a>
                             </li>
                             {% if user.is_admin or user.is_superuser%}
                             <li class="nav-item">
@@ -47,17 +49,18 @@
                         <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
                             {% if  user.is_authenticated %}
                             <li class="nav-item d-flex">
-                                <a class="nav-link fs-5" href="{% url "user:profile" %}"><i class="fa-regular fa-user me-1"></i>{{user.username}}</a>
+                                <a class="nav-link fs-5 {% if request.resolver_match.view_name == "user:profile" %}active{% endif %}" 
+                                href="{% url "user:profile" %}"><i class="fa-solid fa-user fa-sm me-1"></i>{{user.username}}</a>
                             </li>
                             <li class="nav-item d-flex">
                                 <form action="{% url 'user:logout' %}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" class="nav-link fs-5">Log Out</button>
+                                <button type="submit" class="nav-link fs-5">Logout</button>
                                 </form>
                             </li>
                             {% else %}
                             <li class="nav-item d-flex">
-                                <a class="nav-link fs-5" href="{% url "user:login" %}">Log in</a>
+                                <a class="nav-link fs-5" href="{% url "user:login" %}">Login</a>
                             </li>
                             {% endif %}
                         </ul>
@@ -71,28 +74,13 @@
         </nav>
     </header>
 
-
-    {% if messages %}
-    {% for message in messages %}
-        {% if message.tags == 'success' %}
-            <div class="position-fixed start-50 translate-middle-x alert alert-success fade show" role="alert">{{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endif %}
-        {% if message.tags == 'warning' %}
-        <div class="position-fixed start-50 translate-middle-x z-1 alert alert-danger fade show" role="alert">{{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endif %}  
-    {% endfor %}
-    {% endif %}
-
-
+    {% include "notifications.html" %}
+    
     <main>
         <div class='wrapper'>
             <div class="container-fluid">
                 <div class="row">
-
+                    
                     {% block content %}
                     {% endblock content %}
 

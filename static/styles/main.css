@@ -25,9 +25,18 @@ main {
 
 footer {
     border-top: 1px solid rgb(179, 179, 179);
-    background-color: rgb(216, 216, 216);
+    background-color: rgb(241, 241, 241);
     margin-top: auto;
  }
+
+ .navbar {
+    background-color: rgb(243, 243, 243);
+ }
+
+.navbar-brand {
+    font-size: small;
+    color: green;
+}
 
 .carousel-item.latest {
     height: 50vh;
@@ -73,10 +82,10 @@ footer {
 .regform {
     background-color: #f8f9fa;
     border-radius: 15px;
-    box-shadow: 0px -5px 10px 0px rgba(0, 0, 0, 0.5);
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.5);
     padding: 2rem;
     margin-top: 2rem;
-    margin-inline: 0.5rem;
+    margin-bottom: 2rem;
     max-width: 800px;
 
 }
