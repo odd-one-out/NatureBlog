@@ -24,7 +24,7 @@ class IndexView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Nature blog - Main'
+        context['title'] = 'Nature Blog - Main'
         context['categories'] = Category.objects.all()
         context['posts'] = Post.objects.filter(status='Published')[:3]
         return context
@@ -141,7 +141,7 @@ class CreatePostView(LoginRequiredMixin, FormView):
     form_class = PostForm
     success_url = reverse_lazy('user:profile')
     extra_context = {
-        'title': 'Nature Blog - Create Post',
+        'title': 'Nature Blog - create post',
     }
 
     def form_valid(self, form):
@@ -160,7 +160,7 @@ class EditPostView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('user:profile')
     success_message = 'your post was edited successfully'
     extra_context = {
-        'title': 'Nature Blog - Edit Post',
+        'title': 'Nature Blog - edit post',
     }
 
     def form_valid(self, form):
@@ -178,18 +178,22 @@ class DeletePostView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     success_url = reverse_lazy('user:profile')
     success_message = 'your post was deleted'
     extra_context = {
-        'title': 'Nature Blog - Delete Post',
+        'title': 'Nature Blog - delete post',
     }
 
 @login_required
 def delete_comment(request, comment_id):
     try:
         comment = Comment.objects.get(pk=comment_id)
-        comment.delete()
-        messages.success(request, f'{comment} is deleted')
+        if comment.user == request.user:
+            comment.delete()
+            messages.success(request, f'{comment} is deleted')
+        else:
+            messages.warning(request, 'you can\'t delete this comment!')
     except Comment.DoesNotExist:
         messages.error(request, f'{comment} not found')
-    return redirect(request.META.get('HTTP_REFERER'))
+    previous_page = request.META.get('HTTP_REFERER') 
+    return redirect(previous_page if previous_page and not 'login' in previous_page  else ('user:profile'))
 
 
 class UserPostsView(LoginRequiredMixin, ListView):
@@ -202,7 +206,7 @@ class UserPostsView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] =  'Nature Blog - My Posts'
+        context['title'] =  'Nature Blog - my posts'
         context['empty_text'] = 'You haven\'t posted anything yet :('
         context['name'] = 'My posts'
         return context
@@ -218,7 +222,7 @@ class UserLikesView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] =  'Nature Blog - My Favourites'
+        context['title'] =  'Nature Blog - my favourites'
         context['empty_text'] = 'You haven\'t got favourite posts yet :('
         context['name'] = 'Favourite posts'
         return context
@@ -228,7 +232,7 @@ class UserCommentsView(LoginRequiredMixin, ListView):
 
     template_name = 'blog/user_comments.html'
     context_object_name = 'comments'
-    extra_context = {'title': 'Nature Blog - My Comments'}
+    extra_context = {'title': 'Nature Blog - my comments'}
 
     def get_queryset(self):
         return Comment.objects.filter(user=self.request.user).select_related('post').only('date', 'text', 'post__title', 'post__slug')

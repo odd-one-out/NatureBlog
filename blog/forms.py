@@ -11,7 +11,7 @@ class PostForm(ModelForm):
 
         widgets = {
             'title': TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter post title'}),
-            'description': Textarea(attrs={'rows':3, 'col':40, 'class':'form-control', 'placeholder': 'Enter your text here'}),
+            'description': Textarea(attrs={'rows':3, 'cols':40, 'class':'form-control', 'placeholder': 'Enter your text here'}),
         }
 
 
@@ -22,5 +22,5 @@ class CommentForm(ModelForm):
         fields = ('text',)
 
         widgets = {
-            'text': Textarea(attrs={'rows':1, 'col':40,'class':'form-control', 'placeholder': 'Add a comment'}),
+            'text': Textarea(attrs={'rows':1, 'cols':40,'class':'form-control', 'placeholder': 'Add a comment'}),
         }

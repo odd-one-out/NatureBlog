@@ -30,14 +30,16 @@ class RegisterView(CreateView):
 class UserLoginView(LoginView):
     template_name = 'user/login.html'
     form_class = AuthenticationForm
-    extra_context = {'title': 'Nature blog - login'}
+    extra_context = {'title': 'Nature Blog - login'}
 
     # по дефолту django перенаправляет на accounts/profile, переопределяем это:
     def get_default_redirect_url(self):
         if self.request.POST.get('next', None):
                 return self.request.POST.get('next')
-        if not 'login' in self.request.META.get('HTTP_REFERER'):
-            return self.request.META.get('HTTP_REFERER')
+        previous_page = self.request.META.get('HTTP_REFERER')
+        if previous_page:
+            if not 'login' in previous_page:
+                return previous_page
         return reverse_lazy('blog:index')
 
 
