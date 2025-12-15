@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 from blog.models import Category, Post, Comment
 
+User = get_user_model()
 
 #  python manage.py test tests.test_models.CategoryTest
 
@@ -32,7 +33,7 @@ class CategoryTest(TestCase, TestMaxlenghtMixin):
         Category(name=f'cat-{i}') for i in range(1,10)
         ]
         Category.objects.bulk_create(categories) # bulk создает сразу несколько объектов из списка
-        cls.category = Category.objects.get(pk=1)
+        cls.category = Category.objects.get(name='cat-1')
         cls.field_and_max_length = {
             'name': 30,
             'slug': 35,
@@ -78,7 +79,6 @@ class PostTest(TestCase, TestMaxlenghtMixin):
     @classmethod
     def setUpTestData(cls):
         cls.cat = Category.objects.create(name='best')
-        User = get_user_model()
         cls.author = User.objects.create(username="First")
         post_list = [
             Post(title=f'post-{i}', category=cls.cat, author=cls.author) for i in range(1,100)
@@ -103,6 +103,14 @@ class PostTest(TestCase, TestMaxlenghtMixin):
             Post.objects.create(title='anything')
         except Exception as e:
             print(f'not-null constraint check: {str(e)}')
+
+    def test_post_with_deleted_user(self):
+        user = User.objects.create(username='Jane')
+        post = Post.objects.create(title='no_user_post', category=self.cat, author=user)
+        self.assertEqual(post.author.username, 'Jane')
+        user.delete()
+        no_user_post = Post.objects.get(title='no_user_post')
+        self.assertEqual(no_user_post.author.username, 'deleted')
 
     def test_qs_and_object(self):
         posts = Post.objects.all()

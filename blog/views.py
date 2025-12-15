@@ -158,7 +158,6 @@ class EditPostView(LoginRequiredMixin, UpdateView):
     form_class = PostForm
     template_name = "blog/edit_post.html"
     success_url = reverse_lazy('user:profile')
-    success_message = 'your post was edited successfully'
     extra_context = {
         'title': 'Nature Blog - edit post',
     }
@@ -167,6 +166,7 @@ class EditPostView(LoginRequiredMixin, UpdateView):
         post = form.save(commit=False)
         post.status = 'Checking'
         post.save()
+        messages.success(self.request, 'your post was edited successfully')
         return redirect(self.success_url)
     
 
@@ -189,7 +189,7 @@ def delete_comment(request, comment_id):
             comment.delete()
             messages.success(request, f'{comment} is deleted')
         else:
-            messages.warning(request, 'you can\'t delete this comment!')
+            messages.warning(request, 'you have no rights to delete this comment!')
     except Comment.DoesNotExist:
         messages.error(request, f'{comment} not found')
     previous_page = request.META.get('HTTP_REFERER') 

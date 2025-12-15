@@ -149,6 +149,10 @@ class PostPagesTest(DataSetTestCase):
       
 # python manage.py test tests.test_views.UserTest
 
+# To test messages after a redirect in Django,
+# you should use the test client's follow=True option in your request (e.g., client.post(..., follow=True)).
+# This makes the client automatically follow the redirect chain. You can then access the messages stored in the response context or session. 
+
 class UserTest(TestCase):
 
     @classmethod
@@ -188,8 +192,9 @@ class UserTest(TestCase):
     def test_register_success_redirect(self):
         url = reverse('user:register')
         data = {'username': 'Hermione', 'password1': 'Vingardium', 'password2': 'Vingardium'}
-        response = self.client.post(url, data)
+        response = self.client.post(url, data, follow=True)
         self.assertRedirects(response, reverse('user:profile'), status_code=302)
+        self.assertContains(response, 'Hi, Hermione!')
 
 
     def test_change_info_path_and_view(self):
@@ -294,8 +299,9 @@ class UserPostTest(TestCase):
             'title': 'Saturn',
             'category': str(self.category.id)
         }
-        response = self.client.post(reverse('blog:create'), data=data)
+        response = self.client.post(reverse('blog:create'), data=data, follow=True)
         self.assertRedirects(response, reverse('user:profile'), status_code=302)
+        self.assertContains(response, 'Your post is created successfully')
 
 
     def test_post_edit_get_request(self):
@@ -317,8 +323,9 @@ class UserPostTest(TestCase):
             'description': 'beautiful',
             'category': str(self.category.id)
             }
-        response = self.client.post(url, data=data)
+        response = self.client.post(url, data=data, follow=True)
         self.assertRedirects(response, reverse('user:profile'), status_code=302)
+        self.assertContains(response, 'your post was edited successfully')
 
 
     def test_post_delete_path_and_template(self):
@@ -334,9 +341,10 @@ class UserPostTest(TestCase):
         post_to_delete = Post.objects.create(title='to_delete', category=self.category, author=self.user1)
         self.assertTrue(Post.objects.filter(title='to_delete').exists())
         self.client.force_login(user=self.user1)
-        response = self.client.post(reverse('blog:deletepost', args=[post_to_delete.id]))
+        response = self.client.post(reverse('blog:deletepost', args=[post_to_delete.id]), follow=True)
         self.assertRedirects(response, reverse('user:profile'), status_code=302)
         self.assertFalse(Post.objects.filter(title='to_delete').exists())
+        self.assertContains(response, 'your post was deleted')
 
                 
     def test_user_posts_path_and_view_and_template(self):
@@ -402,17 +410,19 @@ class UserPostTest(TestCase):
         comment = Comment.objects.create(text='hello', user=self.user2, post=self.post)
         url = reverse('blog:delete_comment', args=[comment.id])
         self.client.force_login(user=self.user2)
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         self.assertRedirects(response, reverse('user:profile'), status_code=302)
         self.assertFalse(Comment.objects.filter(text='hello').exists())
+        self.assertContains(response, 'is deleted')
 
     def test_comment_delete_by_wrong_user(self):
         comment = Comment.objects.create(text='hello', user=self.user2, post=self.post)
         url = reverse('blog:delete_comment', args=[comment.id])
         self.client.force_login(user=self.user1)
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         self.assertRedirects(response, reverse('user:profile'), status_code=302)
         self.assertTrue(Comment.objects.filter(text='hello').exists())
+        self.assertContains(response, 'you have no rights to delete this comment!')
 
 
 
