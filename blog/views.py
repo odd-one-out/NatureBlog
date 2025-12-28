@@ -2,15 +2,17 @@ from django.forms import ValidationError
 from django.views.generic.base import TemplateView
 from django.views.generic import DetailView, UpdateView, ListView
 from django.views.generic.edit import FormView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib.messages.views import SuccessMessageMixin
+from django.contrib import messages
 
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 
 from django.db.models import Count
-from django.contrib import messages
+
+from django.http import HttpResponseForbidden, Http404
 
 from blog.models import Category, Post, Comment
 from blog.forms import PostForm, CommentForm
@@ -42,7 +44,10 @@ class PostListView(ListView):
         cat_slug = self.kwargs.get('cat_slug')
         search = self.request.GET.get('q', None)
         if cat_slug:
-            posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+            try:
+                posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+            except Category.DoesNotExist:
+                raise Http404('No such category')
 
         elif search:
             posts = search_post(search).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
@@ -79,7 +84,7 @@ class PostListView(ListView):
         slug = self.kwargs.get('cat_slug')
         context['cat_slug'] = slug
         if slug:
-            context['category'] = Category.objects.get(slug=slug)
+            context['category'] = get_object_or_404(Category, slug=slug)
         context['page_title'] = self.page_title
 
         return context
@@ -142,6 +147,8 @@ class CreatePostView(LoginRequiredMixin, FormView):
     success_url = reverse_lazy('user:profile')
     extra_context = {
         'title': 'Nature Blog - create post',
+        'page_title': 'Post creation',
+        'btn_name': 'Create post'
     }
 
     def form_valid(self, form):
@@ -152,34 +159,48 @@ class CreatePostView(LoginRequiredMixin, FormView):
         return redirect(self.success_url)
     
 
-class EditPostView(LoginRequiredMixin, UpdateView):
+class EditPostView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     model = Post
     form_class = PostForm
-    template_name = "blog/edit_post.html"
+    template_name = "blog/create_post.html"
     success_url = reverse_lazy('user:profile')
     extra_context = {
         'title': 'Nature Blog - edit post',
+        'page_title': 'Post editing',
+        'btn_name': 'Edit post'
     }
 
+    def test_func(self):
+        # Get the object the user is trying to access
+        post = self.get_object()
+        # Return True if the current user is the object's author, False otherwise
+        return post.author == self.request.user
+
     def form_valid(self, form):
-        post = form.save(commit=False)
-        post.status = 'Checking'
+        post = form.save(commit=False)     
+        post.status = Post.STATUS[0][0]
         post.save()
-        messages.success(self.request, 'your post was edited successfully')
+        messages.success(self.request, 'your post was edited successfully. It\'s on moderation now.')
         return redirect(self.success_url)
     
 
-class DeletePostView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
+class DeletePostView(LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, DeleteView):
 
     model = Post
-    slug_url_kwarg = 'post_slug'
     template_name = 'blog/post_confirm_delete.html'
     success_url = reverse_lazy('user:profile')
     success_message = 'your post was deleted'
     extra_context = {
         'title': 'Nature Blog - delete post',
     }
+
+    def test_func(self):
+        # Get the object the user is trying to access
+        post = self.get_object()
+        # Return True if the current user is the object's author, False otherwise
+        return post.author == self.request.user
+
 
 @login_required
 def delete_comment(request, comment_id):
@@ -189,10 +210,10 @@ def delete_comment(request, comment_id):
             comment.delete()
             messages.success(request, f'{comment} is deleted')
         else:
-            messages.warning(request, 'you have no rights to delete this comment!')
+            return HttpResponseForbidden('YOU HAVE NO RIGHTS TO DELETE THIS COMMENT!')
     except Comment.DoesNotExist:
-        messages.error(request, f'{comment} not found')
-    previous_page = request.META.get('HTTP_REFERER') 
+        messages.error(request, f'comment {comment_id} not found')
+    previous_page = request.META.get('HTTP_REFERER')
     return redirect(previous_page if previous_page and not 'login' in previous_page  else ('user:profile'))
 
 

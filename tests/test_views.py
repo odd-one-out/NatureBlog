@@ -121,6 +121,10 @@ class PostPagesTest(DataSetTestCase):
         self.assertIn('page_title', response.context)
         self.assertEqual(response.context['page_title'], None)
 
+    def test_posts_by_doesntexist_category(self):
+        url = reverse('blog:posts', args=['doesntexist-slug'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
     def test_no_posts_on_page(self):
         no_post_cat = Category.objects.create(name='Bugs')
@@ -144,6 +148,11 @@ class PostPagesTest(DataSetTestCase):
         template_context = ['title', 'liked', 'comment_form', 'comments']
         for context in template_context:
             self.assertIn(context, response.context)
+
+    def test_post_detail_by_doesntexist_post_slug(self):
+        url = reverse('blog:post', args=['doesntexist-post-slug'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
    
 
       
@@ -289,7 +298,9 @@ class UserPostTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/create_post.html')
         self.assertContains(response, 'Nature Blog - create post')
-        self.assertIn('form', response.context)
+        context_vars = ['form' , 'page_title', 'btn_name']
+        for var in context_vars:
+            self.assertIn(var, response.context)
         self.assertIsInstance(response.context['form'], PostForm)
 
     def test_post_create_post_request_valid_data(self):
@@ -310,10 +321,20 @@ class UserPostTest(TestCase):
         self.assertEqual(url, f'/edit/{self.post.id}/')
         self.assertEqual(resolve(url).func.view_class, EditPostView)
         response = self.client.get(url)
-        self.assertTemplateUsed(response, 'blog/edit_post.html')
+        self.assertTemplateUsed(response, 'blog/create_post.html')
         self.assertContains(response, 'Nature Blog - edit post')
-        self.assertIn('form', response.context)
+        self.assertContains(response, 'Update')
+        context_vars = ['form', 'page_title', 'btn_name']
+        for var in context_vars:
+            self.assertIn(var, response.context)
         self.assertIsInstance(response.context['form'], PostForm)
+
+    def test_post_edit_get_request_by_wrong_user(self):
+        self.client.force_login(user=self.user1)
+        url = reverse('blog:editpost', args=[self.post.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
 
     def test_post_edit_post_request_valid_data(self):
         self.client.force_login(user=self.user2)
@@ -336,6 +357,13 @@ class UserPostTest(TestCase):
         response = self.client.get(url)
         self.assertTemplateUsed(response, 'blog/post_confirm_delete.html')
         self.assertContains(response, 'Nature Blog - delete post')
+
+    def test_post_delete_get_request_by_wrong_user(self):
+        self.client.force_login(user=self.user1)
+        url = reverse('blog:deletepost', args=[self.post.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
 
     def test_post_delete_post_request(self):
         post_to_delete = Post.objects.create(title='to_delete', category=self.category, author=self.user1)
@@ -420,9 +448,9 @@ class UserPostTest(TestCase):
         url = reverse('blog:delete_comment', args=[comment.id])
         self.client.force_login(user=self.user1)
         response = self.client.get(url, follow=True)
-        self.assertRedirects(response, reverse('user:profile'), status_code=302)
+        self.assertEqual(response.status_code, 403)
         self.assertTrue(Comment.objects.filter(text='hello').exists())
-        self.assertContains(response, 'you have no rights to delete this comment!')
+
 
 
 

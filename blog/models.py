@@ -81,10 +81,14 @@ class Comment(models.Model):
         now_time = datetime.now(ZoneInfo("UTC"))
         diff = now_time-self.date #timedelta object
         if diff.days:
-            return f'{diff.days} days ago' if diff.days>1 else f'{diff.days} day ago'
+            if diff.days <= 29:
+                return f'{diff.days} days ago' if diff.days>1 else f'{diff.days} day ago'
+            elif 29 < diff.days:
+                months = diff.days//30
+                return f'{months} months ago' if months>1 else f'{months} month ago'
         else:
-            hours = round(diff.seconds/3600)
-            minutes = round(diff.seconds/60)
+            hours = diff.seconds//3600
+            minutes = diff.seconds//60
             if hours:
                 return f'{hours} hours ago' if hours>1 else f'{hours} hour ago'
             elif minutes and not hours:
