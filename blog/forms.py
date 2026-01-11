@@ -7,7 +7,7 @@ class PostForm(ModelForm):
 
     class Meta:
         model = Post
-        fields = ('title', 'description', 'image1', 'image2', 'image3', 'category')
+        fields = ('title', 'description', 'image1', 'image2', 'image3', 'video_file', 'category')
 
         widgets = {
             'title': TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter post title'}),

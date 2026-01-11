@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
+from django.core.validators import FileExtensionValidator
+from django.core.exceptions import ValidationError
 
 
 User = get_user_model()
@@ -26,7 +28,13 @@ class Category(models.Model):
     
 
 def get_sentinel_user():
-    return User.objects.get_or_create(username="deleted")[0]    
+    return User.objects.get_or_create(username="deleted")[0]
+
+# Source - https://stackoverflow.com/a
+def file_size(value): # add this to some file where you can import it from
+    limit = 20 * 1024 * 1024 # 20mb
+    if value.size > limit:
+        raise ValidationError('File is too big. File size should not be more than 3Mb')
     
 class Post(models.Model):
     '''Post'''
@@ -42,6 +50,8 @@ class Post(models.Model):
     image1 = models.ImageField(upload_to='post_images', blank=True, null=True)
     image2 = models.ImageField(upload_to='post_images', blank=True, null=True)
     image3 = models.ImageField(upload_to='post_images', blank=True, null=True)
+    video_file = models.FileField(upload_to='post_videos', blank=True, null=True,
+        validators=[FileExtensionValidator(allowed_extensions=['MOV', 'avi', 'mp4', 'webm', 'mkv']), file_size], verbose_name='video')
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=STATUS, default='Checking')
     likes = models.ManyToManyField(User, related_name='user_likes', blank=True)

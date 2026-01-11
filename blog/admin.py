@@ -41,7 +41,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    fields = ['title', 'slug', 'description', 'date', 'author', 'category', 'display_likes', 'status', ('image1', 'image2', 'image3')]
+    fields = ['title', 'slug', 'description', 'date', 'author', 'category', 'display_likes', 'status', ('image1', 'image2', 'image3'), 'video_file']
     readonly_fields = ['display_likes', 'date', 'author']
     list_display = ['id', 'title', 'status', 'category', 'author', 'date']
     list_editable = ['status']

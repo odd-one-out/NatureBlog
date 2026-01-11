@@ -9,38 +9,45 @@
         <div id="carouselExample" class="carousel slide">
             <div class="carousel-inner">
                 <div class="carousel-item active detail">
-                    {% if post.image1 %}
+                {% if post.image1 %}
                     <img src="{{ post.image1.url }}" class="d-block w-100" alt="{{ post.title }}">
-                    {% else %}
+                {% else %}                
                     <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
-                    {% endif %}
-                </div>
+                {% endif %}
+                </div>               
+                
                 <div class="carousel-item detail">
-                    {% if post.image2 %}
-                    <img src="{{ post.image2.url}}" class="d-block w-100" alt="{{ post.title }}">
-                    {% else %}
-                    <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
-                    {% endif %}
+                    <img src="{% if post.image2 %}{{ post.image2.url}}
+                    {% elif post.image3 %}{{ post.image3.url}}
+                    {% else %}{% static "images/no_image.jpg" %}
+                    {% endif %}" class="d-block w-100" alt="{{ post.title }}">
                 </div>
+               
+                {% if post.video_file %}
                 <div class="carousel-item detail">
-                    {% if post.image3 %}
-                    <img src="{{ post.image3.url}}" class="d-block w-100" alt="{{ post.title }}">
-                    {% else %}
-                    <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
-                    {% endif %}
+                    <div class="container">
+                        <video controls>
+                            <source src="{{ post.video_file.url}}" type="video/mp4">
+                            <source src="{{ post.video_file.url}}" type="video/webm">
+                            <source src="{{ post.video_file.url}}" type="video/avi">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
                 </div>
+                {% endif %}
             </div>
             <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample"
                 data-bs-slide="prev">
-                <span class="carousel-control-prev-icon bg-dark rounded p-4" aria-hidden="true"></span>
+                <span class="carousel-control-prev-icon bg-dark rounded" aria-hidden="true"></span>
                 <span class="visually-hidden">Previous</span>
             </button>
             <button class="carousel-control-next" type="button" data-bs-target="#carouselExample"
                 data-bs-slide="next">
-                <span class="carousel-control-next-icon bg-dark rounded p-4" aria-hidden="true"></span>
+                <span class="carousel-control-next-icon bg-dark rounded" aria-hidden="true"></span>
                 <span class="visually-hidden">Next</span>
             </button>
         </div>
+
         <div class="container pt-3 mb-2">
             <div class="card-body">
                 <div class="d-flex justify-content-between"> 
