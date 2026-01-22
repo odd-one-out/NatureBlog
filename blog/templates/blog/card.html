@@ -1,5 +1,7 @@
 {% load static %}
 
+{% block css %}<link rel="stylesheet" href="{% static "styles/card.css" %}">{% endblock css %}
+
 
 <div class="col-sm-6 col-lg-4 col-md-6 col-12 my-2">
     {% if post.status == 'Published' %}

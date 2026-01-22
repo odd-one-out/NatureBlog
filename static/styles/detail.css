@@ -1,0 +1,51 @@
+/* styles for detail page - images */
+
+.picture img:hover {
+    cursor: pointer;
+    transition: .2s linear; /* this sets timer(linear is a timer func) for 0.2seconds to transit color(or change sth else) on hover */
+    filter: brightness(70%)
+}
+
+#FullScreenBlock {
+    display: none;
+    position: absolute;
+    top: 3rem;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    text-align: center;
+}
+
+#FullImg {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+#CloseBtn {
+    position: fixed;
+    top: 2rem;
+    right: 0.5rem;
+    font-size: 4rem;
+    color: white;
+    cursor: pointer;
+}
+
+.container video{
+  width: 100%;
+  height: 100%;
+  /* position: absolute; */
+  /* left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);  */
+}
+
+
+@media(max-width: 768px) {
+    .picture {
+        margin-bottom: 1rem;
+    }
+}

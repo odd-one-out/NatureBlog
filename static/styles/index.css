@@ -1,0 +1,23 @@
+/* styles for index page  */
+
+.carousel-item img {
+    height: 75vh;
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+  width: 5%; /* Makes the clickable area 5% of the carousel width */
+  font-size: small;
+}
+
+@media(max-width: 576px) {
+    .carousel-item img {
+    height: 50vh;
+}
+}
+
+@media(max-height: 450px) {
+    .carousel, .carousel-inner, .carousel-item {
+        height: 80vh;
+    }
+}

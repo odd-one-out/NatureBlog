@@ -1,59 +1,60 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block css %}<link rel="stylesheet" href="{% static "styles/detail.css" %}">{% endblock css %}
 
 {% block content %}
     <div class="col-12">
         {% if post.status == 'Published' %}
         <h4 class="text-center">{{ post.title }}</h4>
-        <div id="carouselExample" class="carousel slide">
-            <div class="carousel-inner">
-                <div class="carousel-item active detail">
+        
+        {% comment %} container for pictures {% endcomment %}
+        <div class="container mb-2">
+            <div class="row">
                 {% if post.image1 %}
-                    <img src="{{ post.image1.url }}" class="d-block w-100" alt="{{ post.title }}">
-                {% else %}                
-                    <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
-                {% endif %}
-                </div>               
-                
-                <div class="carousel-item detail">
-                    <img src="{% if post.image2 %}{{ post.image2.url}}
-                    {% elif post.image3 %}{{ post.image3.url}}
-                    {% else %}{% static "images/no_image.jpg" %}
-                    {% endif %}" class="d-block w-100" alt="{{ post.title }}">
+                <div class="col-md-4 col-sm-6 col-12 picture">
+                    <img src="{{ post.image1.url }}" class="w-100 h-100" alt="{{ post.title }}" onclick="FullScreen(this.src);">
                 </div>
-               
-                {% if post.video_file %}
-                <div class="carousel-item detail">
-                    <div class="container">
-                        <video controls>
-                            <source src="{{ post.video_file.url}}" type="video/mp4">
-                            <source src="{{ post.video_file.url}}" type="video/webm">
-                            <source src="{{ post.video_file.url}}" type="video/avi">
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
+                {% endif %}
+                {% if post.image2 %}
+                <div class="col-md-4 col-sm-6 col-12 picture px-md-0">
+                    <img src="{{ post.image2.url }}" class="w-100 h-100" alt="{{ post.title }}" onclick="FullScreen(this.src);">
+                </div>
+                {% endif %}
+                {% if post.image3 %}
+                <div class="col-md-4 col-sm-12 col-12 picture">
+                    <img src="{{ post.image3.url }}" class="w-100 h-100" alt="{{ post.title }}" onclick="FullScreen(this.src);">
                 </div>
                 {% endif %}
             </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample"
-                data-bs-slide="prev">
-                <span class="carousel-control-prev-icon bg-dark rounded" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#carouselExample"
-                data-bs-slide="next">
-                <span class="carousel-control-next-icon bg-dark rounded" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
+        </div>
+        
+        {% comment %} full screen picture block, works with js {% endcomment %}
+        <div id="FullScreenBlock">
+            <img id="FullImg">
+            <span id="CloseBtn" onclick="CloseFullScreen()">&times;</span>
         </div>
 
+
+        {% if post.video_file %}
+            <div class="container">
+                <video controls>
+                    <source src="{{ post.video_file.url}}" type="video/mp4">
+                    <source src="{{ post.video_file.url}}" type="video/webm">
+                    <source src="{{ post.video_file.url}}" type="video/avi">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        {% endif %}
+
+        {% comment %}all post info block {% endcomment %}
         <div class="container pt-3 mb-2">
             <div class="card-body">
                 <div class="d-flex justify-content-between"> 
                     <p>{{ post.date|date:'F, j' }}</p>
                      <div class="d-flex align-items-center">                   
                     
+                        {% comment %} like-dislike form {% endcomment %}
                         <form action="{% url 'blog:post' post.slug %}" method="post" style="width: 36px;">
                             {% csrf_token %}
                             <button type="submit" class="btn" name="submit-like">
@@ -73,6 +74,7 @@
                 <p class="fs-5 mb-2">{{ post.description }}</p>
                 <p class="fst-italic">posted by {{ post.author }}</p>
 
+                {% comment %} comment form {% endcomment %}
                 <form action="{% url 'blog:post' post.slug %}" method="post">
                     <div class="d-flex flex-row mt-4">
                         {% csrf_token %}
@@ -82,6 +84,7 @@
                     </div>
                 </form>
 
+                {% comment %} all comments for this post block {% endcomment %}
                 <div class="mt-4">
                     <p class="fs-5 mt-2">Comments:</p>
                     {% for comment in comments  %}
@@ -107,15 +110,22 @@
                 {% endif %}
             </div>
         </div>
+
+        {% comment %} block for not published yet post {% endcomment %}
         {% else %}
         <h4 class="mb-3">post {{ post.id }} is on moderation now. It will appear here very soon)</h4>
-        {% if user.id == post.author.id %}
-            <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary me-3">edit post</a>
-            <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger">delete post</a>
-        {% endif %}
+            {% if user.id == post.author.id %}
+                <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary me-3">edit post</a>
+                <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger">delete post</a>
+            {% endif %}
         {% endif %}
     </div>
 {% endblock content %}
+
+{% comment %} js for full screen picture show {% endcomment %}
+{% block js %}
+    <script src="{% static "js/full_screen.js" %}"></script>
+{% endblock js %}
 
 
 

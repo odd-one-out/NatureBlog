@@ -29,6 +29,15 @@ footer {
     margin-top: auto;
  }
 
+.footer {
+    margin-inline: 30%;
+    padding-block: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: larger;
+}
+
  .navbar {
     background-color: rgb(243, 243, 243);
  }
@@ -38,68 +47,12 @@ footer {
     color: green;
 }
 
-.carousel-item.latest {
-    height: 50vh;
-}
-
-.carousel-item.detail {
-    height: 700px;
-}
-
-.carousel-item img {
-    height: 100%;
+img {
     object-fit: cover;
     object-position: center;
 }
 
-.carousel-control-prev,
-.carousel-control-next {
-  width: 5%; /* Makes the clickable area 10% of the carousel width */
-  font-size: small;
-}
 
-
-.carousel-item .container{
-  width: 88%;
-  margin-inline: auto;
-  padding: 0;
-  height: 100%;
-}
-
-.container video{
-  width: 100%;
-  height: 100%;
-  /* position: absolute; */
-  /* left: 50%;
-  top: 50%;
-  transform: translate(-50%,-50%);                             */
-}
-
-.card {
-    height: 100%;
-}
-
-.card>a>img, .card>img {
-    height: 35vh;
-    object-fit: cover;
-    object-position: center;
-}
-
-.like-comment {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-}
-
-.footer {
-    margin-inline: 30%;
-    padding-block: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: larger;
-}
 
 /* class only for login.html and register.html */
 .regform {
@@ -125,10 +78,6 @@ footer {
         width: 90vw;
     }
 
-    /* .carousel-item.detail {
-        height: 500px;
-    } */
-
     .regform {
         max-width: 600px;
     }
@@ -140,21 +89,8 @@ footer {
 }
 
 @media(max-width: 576px) {
-    .carousel-item.detail {
-        height: 400px;
-    }
-
-    .card>a>img, .card>img {
-        height: 45vh;
-    }
-
     .regform {
         width: 85vw;
     }
 }
 
-@media(max-height: 450px) {
-    .carousel, .carousel-inner, .carousel-item.detail, .carousel-item.latest {
-        height: 80vh;
-    }
-}

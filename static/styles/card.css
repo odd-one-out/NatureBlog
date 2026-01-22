@@ -1,0 +1,31 @@
+/* styles for index and posts pages */
+
+.card {
+    height: 100%;
+}
+
+.card>a>img, .card>img {
+    height: 35vh;
+    object-fit: cover;
+    object-position: center;
+}
+
+.like-comment {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+@media(max-height: 450px) {
+    .card>a>img, .card>img {
+        height: 50vh;
+    }
+}
+
+@media(max-width: 576px) {
+    .card>a>img, .card>img {
+        height: 45vh;
+    }
+}
+
