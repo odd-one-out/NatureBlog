@@ -3,13 +3,13 @@
 
 
 {% block content %}
-    <div class="container regform mx-auto">
+    <div class="regform mx-auto">
         <h3>Log in</h3>
         <form method="post" action="{% url "user:login" %}">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}"/>
             {% for field in form %}
-            <div class="my-4">
+            <div class="py-2">
             {{ field.errors }}
             {{ field.label_tag }} {{ field }}
             </div>

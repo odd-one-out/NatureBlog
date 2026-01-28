@@ -54,7 +54,7 @@ img {
 
 
 
-/* class only for login.html and register.html */
+/* class only for user login/register/change_password pages */
 .regform {
     background-color: #f8f9fa;
     border-radius: 15px;
@@ -62,7 +62,8 @@ img {
     padding: 2rem;
     margin-top: 2rem;
     margin-bottom: 2rem;
-    max-width: 800px;
+    width: 96%;
+    /* max-width: 800px; */
 
 }
 
@@ -79,7 +80,8 @@ img {
     }
 
     .regform {
-        max-width: 600px;
+        margin-top: 1rem;
+        padding: 1.5rem;
     }
 
     .footer {
@@ -90,7 +92,7 @@ img {
 
 @media(max-width: 576px) {
     .regform {
-        width: 85vw;
+    margin-top: .5rem;
     }
 }
 
