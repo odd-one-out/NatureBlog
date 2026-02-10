@@ -1,0 +1,56 @@
+from rest_framework import serializers
+
+from blog.models import Category, Post, Comment
+
+
+
+class PostSerializer(serializers.ModelSerializer):
+    
+    user = serializers.ReadOnlyField(source='author.username')
+    comments = serializers.SerializerMethodField()
+    post_likes = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'description', 'image1', 'image2', 'image3','video_file', 'date', 'category', 'user', 'comment_set', 'comments', 'post_likes']
+        read_only_fields = [ 'comment_set']
+        depth = 1
+
+    def get_comments(self, obj):
+        return obj.comment_set.count()
+
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    posts_in_category = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Category
+        fields = ['name', 'post_set', 'posts_in_category']
+
+    def get_posts_in_category(self, obj):
+        return obj.post_set.count()
+    
+
+
+    
+
+class BlogInfoSerializer(serializers.Serializer):
+
+    category = CategorySerializer(many=True)
+    total_posts = serializers.IntegerField()
+    total_comments = serializers.IntegerField()
+    total_likes  = serializers.IntegerField()
+
+
+class CommentSerializer(serializers.ModelSerializer):
+
+    user = serializers.ReadOnlyField(source='user.username')
+    post = serializers.ReadOnlyField(source='post.title')
+
+    class Meta:
+        model = Comment
+        fields = '__all__'
+
+
+

@@ -10,13 +10,23 @@ from django.contrib import messages
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
 
-from django.db.models import Count
+from django.db.models import Count, Max
 
 from django.http import HttpResponseForbidden, Http404
 
 from blog.models import Category, Post, Comment
 from blog.forms import PostForm, CommentForm
 from blog.utils import search_post
+
+
+from rest_framework import generics, viewsets
+from rest_framework.views import APIView 
+from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
+
+from blog.serializers import PostSerializer, BlogInfoSerializer, CommentSerializer
+from blog.permissions import IsAuthorOrReadOnly
+
 
 
 
@@ -262,3 +272,35 @@ class UserCommentsView(LoginRequiredMixin, ListView):
     #     context = super().get_context_data(**kwargs)
     #     context['title'] =  'Nature Blog - My Comments'
     #     return context
+
+
+# rest framework
+class PostAPIViewset(viewsets.ModelViewSet):
+
+    queryset = Post.objects.all().select_related('category', 'author').prefetch_related('comment_set').annotate(post_likes=Count('likes'))
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly ]
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+class TotalPostInfoAPIView(APIView):
+    
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        posts = Post.objects.all()
+        serializer = BlogInfoSerializer({
+            'category': Category.objects.prefetch_related('post_set'),   
+            'total_posts': len(posts),
+            'total_comments': Comment.objects.count(),
+            'total_likes': posts.aggregate(likes_count=Count('likes'))['likes_count'],
+            })
+        return Response(serializer.data)
+    
+    
+class CommentAPIView(generics.ListAPIView):
+
+    queryset  = Comment.objects.all().select_related('user', 'post')
+    serializer_class = CommentSerializer
+
