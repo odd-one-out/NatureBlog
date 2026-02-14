@@ -26,9 +26,11 @@ urlpatterns = [
     path('user-comments/', views.UserCommentsView.as_view(), name='usercomments'),
     path('delete-comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
 
-    # API path
-    # path('post-api/', views.PostAPIView.as_view(), name='api'),
+    # API paths
      path('', include(router.urls)),
      path('info-api/', views.TotalPostInfoAPIView.as_view(), name='total_info'),
-     path('comment-api/', views.CommentAPIView.as_view(), name='comment-api'),
+     path('comment-api/', views.CommentAPIView.as_view(), name='comment_api'),
+     path('user-posts-api/', views.UserPostAPIView.as_view(), name='userposts_api'),
+     path('user-likes-api/', views.UserPostAPIView.as_view(), name='userlikes_api'),
+     path('users-api/', views.UserAPIView.as_view(), name='users_api'),
 ]

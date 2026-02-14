@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from blog.models import Category, Post, Comment
-
+from django.contrib.auth import get_user_model
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -14,14 +14,13 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'title', 'description', 'image1', 'image2', 'image3','video_file', 'date', 'category', 'user', 'comment_set', 'comments', 'post_likes']
         read_only_fields = [ 'comment_set']
-        depth = 1
 
     def get_comments(self, obj):
         return obj.comment_set.count()
 
 
-
 class CategorySerializer(serializers.ModelSerializer):
+
     posts_in_category = serializers.SerializerMethodField()
 
     class Meta:
@@ -30,9 +29,6 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def get_posts_in_category(self, obj):
         return obj.post_set.count()
-    
-
-
     
 
 class BlogInfoSerializer(serializers.Serializer):
@@ -50,6 +46,13 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
+        fields = '__all__'
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = get_user_model()
         fields = '__all__'
 
 

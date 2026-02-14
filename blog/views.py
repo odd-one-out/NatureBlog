@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.forms import ValidationError
 from django.views.generic.base import TemplateView
 from django.views.generic import DetailView, UpdateView, ListView
@@ -21,10 +22,10 @@ from blog.utils import search_post
 
 from rest_framework import generics, viewsets
 from rest_framework.views import APIView 
-from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly, IsAuthenticated
 from rest_framework.response import Response
 
-from blog.serializers import PostSerializer, BlogInfoSerializer, CommentSerializer
+from blog.serializers import PostSerializer, BlogInfoSerializer, CommentSerializer, UserSerializer
 from blog.permissions import IsAuthorOrReadOnly
 
 
@@ -284,6 +285,11 @@ class PostAPIViewset(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def update(self, request, *args, **kwargs):
+        kwargs['partial'] = True # Forces partial update
+        return super().update(request, *args, **kwargs)
+
+
 class TotalPostInfoAPIView(APIView):
     
     permission_classes = [IsAdminUser]
@@ -304,3 +310,22 @@ class CommentAPIView(generics.ListAPIView):
     queryset  = Comment.objects.all().select_related('user', 'post')
     serializer_class = CommentSerializer
 
+
+class UserPostAPIView(generics.ListAPIView):
+    
+    queryset = Post.objects.all().select_related('category', 'author').prefetch_related('comment_set').annotate(post_likes=Count('likes'))
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.path == '/user-posts-api/':
+            return super().get_queryset().filter(author=self.request.user)
+        elif self.request.path =='/user-likes-api/':
+            return super().get_queryset().filter(likes=self.request.user)
+
+                  
+class UserAPIView(generics.ListAPIView):
+
+    queryset = get_user_model().objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser] 
