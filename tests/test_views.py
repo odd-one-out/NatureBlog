@@ -4,7 +4,7 @@ from django.urls import reverse, resolve
 from blog.views import (
                         IndexView, PostListView, PostView,
                         CreatePostView, EditPostView, DeletePostView,
-                        UserPostsView, UserLikesView, UserCommentsView,
+                        UserPostsandLikesView, UserCommentsView,
                         delete_comment
                         )
 
@@ -379,7 +379,7 @@ class UserPostTest(TestCase):
         self.client.force_login(user=self.user2)
         url = reverse('blog:userposts')
         self.assertEqual(url, '/user-posts/')
-        self.assertEqual(resolve(url).func.view_class, UserPostsView)
+        self.assertEqual(resolve(url).func.view_class, UserPostsandLikesView)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/user_posts_and_likes.html')
@@ -398,7 +398,7 @@ class UserPostTest(TestCase):
         self.client.force_login(self.user1)
         url = reverse('blog:userlikes')
         self.assertEqual(url, '/user-likes/')
-        self.assertEqual(resolve(url).func.view_class, UserLikesView)
+        self.assertEqual(resolve(url).func.view_class, UserPostsandLikesView)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/user_posts_and_likes.html')

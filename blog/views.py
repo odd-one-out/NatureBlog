@@ -1,10 +1,10 @@
-from django.contrib.auth import get_user_model
 from django.forms import ValidationError
 from django.views.generic.base import TemplateView
 from django.views.generic import DetailView, UpdateView, ListView
 from django.views.generic.edit import FormView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 
@@ -27,7 +27,6 @@ from rest_framework.response import Response
 
 from blog.serializers import PostSerializer, BlogInfoSerializer, CommentSerializer, UserSerializer
 from blog.permissions import IsAuthorOrReadOnly
-
 
 
 
@@ -228,36 +227,44 @@ def delete_comment(request, comment_id):
     return redirect(previous_page if previous_page and not 'login' in previous_page  else ('user:profile'))
 
 
-class UserPostsView(LoginRequiredMixin, ListView):
+class UserPostsandLikesView(LoginRequiredMixin, ListView):
 
     template_name = 'blog/user_posts_and_likes.html'
     context_object_name = 'posts'
 
     def get_queryset(self):
-        return Post.objects.filter(author=self.request.user).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+        if '/user-posts/' in self.request.path:
+            return Post.objects.filter(author=self.request.user).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+        elif '/user-likes/' in self.request.path:
+            return Post.objects.filter(likes__id=self.request.user.id).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] =  'Nature Blog - my posts'
-        context['empty_text'] = 'You haven\'t posted anything yet :('
-        context['name'] = 'My posts'
+        if '/user-posts/' in self.request.path:
+            context['title'] =  'Nature Blog - my posts'
+            context['empty_text'] = 'You haven\'t posted anything yet :('
+            context['name'] = 'My posts'
+        elif '/user-likes/' in self.request.path:
+            context['title'] =  'Nature Blog - my favourites'
+            context['empty_text'] = 'You haven\'t got favourite posts yet :('
+            context['name'] = 'Favourite posts'
         return context
     
 
-class UserLikesView(LoginRequiredMixin, ListView):
+# class UserLikesView(LoginRequiredMixin, ListView):
 
-    template_name = 'blog/user_posts_and_likes.html'
-    context_object_name = 'posts'
+#     template_name = 'blog/user_posts_and_likes.html'
+#     context_object_name = 'posts'
 
-    def get_queryset(self):
-        return Post.objects.annotate(likes_count=Count('likes')).filter(likes__id=self.request.user.id).select_related('author').prefetch_related('comment_set')
+#     def get_queryset(self):
+#         return Post.objects.annotate(likes_count=Count('likes')).filter(likes__id=self.request.user.id).select_related('author').prefetch_related('comment_set')
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] =  'Nature Blog - my favourites'
-        context['empty_text'] = 'You haven\'t got favourite posts yet :('
-        context['name'] = 'Favourite posts'
-        return context
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context['title'] =  'Nature Blog - my favourites'
+#         context['empty_text'] = 'You haven\'t got favourite posts yet :('
+#         context['name'] = 'Favourite posts'
+#         return context
 
 
 class UserCommentsView(LoginRequiredMixin, ListView):
