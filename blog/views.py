@@ -50,24 +50,34 @@ class PostListView(ListView):
     page_title = None
 
     def get_queryset(self):
+        posts = Post.objects.annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
 
         cat_slug = self.kwargs.get('cat_slug')
         search = self.request.GET.get('q', None)
+        time_period = self.request.GET.get('time_period', None)
+        order_by = self.request.GET.get('order_by', None)
+            
         if cat_slug:
             try:
-                posts =  Post.objects.filter(category__slug=cat_slug).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+                posts =  posts.filter(category__slug=cat_slug)
             except Category.DoesNotExist:
                 raise Http404('No such category')
 
         elif search:
-            posts = search_post(search).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+            posts = search_post(search, posts)
             self.page_title = 'Search results'
         
         else:
-            posts = Post.objects.all().annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
             self.page_title = 'All Posts'
 
-        order_by = self.request.GET.get('order_by', None)
+        if time_period:
+            from django.utils import timezone
+            if time_period == 'year':
+                posts = posts.filter(date__year=timezone.now().year)
+            else:
+                from datetime import timedelta
+                posts = posts.filter(date__gte=timezone.now()-timedelta(days=int(time_period)))
+
         if order_by:
             posts = posts.order_by(order_by)
 

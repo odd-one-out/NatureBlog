@@ -14,36 +14,79 @@
         
         {% if posts %}
         <div class="d-flex justify-content-between">
-            <div class="dropdown dropend">
-                <a class="btn dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                aria-expanded="false">Sort by
-                </a>
-                <ul class="dropdown-menu">
-                    <form action="{% if request.GET.q %}{% url "blog:search" %}
-                        {% elif cat_slug %}{% url "blog:posts" cat_slug %}
-                        {% else %}{% url "blog:allposts" %}
-                        {% endif %}" method="get">
-                        {% if request.GET.q %}
-                        <input type="hidden" name="q" value="{{ request.GET.q }}">
-                        {% endif %}
-                        <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                            id="flexRadioDefault1" value="date" {% if request.GET.order_by == 'date' %}checked{% endif %}>
-                            <label class="form-check-label ms-2" for="flexRadioDefault1">Oldest to Newest</label>
-                        </li>
-                        <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                            id="flexRadioDefault1" value="-date" {% if request.GET.order_by == '-date' %}checked{% endif %}>
-                            <label class="form-check-label ms-2" for="flexRadioDefault1">Newest to Oldest</label>
-                        </li>
-                        <li class="dropdown-item fs-5"><input class="form-check-input" type="radio"  name="order_by"
-                            id="flexRadioDefault1" value="-likes_count" {% if request.GET.order_by == '-likes_count' %}checked{% endif %}>
-                            <label class="form-check-label ms-2" for="flexRadioDefault1">Likes</label>
-                        </li>    
-                        <li class="dropdown-item fs-5">
-                            <button type="submit" class="btn btn-primary">Apply</button>
-                        </li>
+            <div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        sort by
+                    </button>
+                    <ul class="dropdown-menu">
+                        <form action="{% if request.GET.q %}{% url "blog:search" %}
+                            {% elif cat_slug %}{% url "blog:posts" cat_slug %}
+                            {% else %}{% url "blog:allposts" %}
+                            {% endif %}" method="get">
+                            {% if request.GET.q %}
+                            <input type="hidden" name="q" value="{{ request.GET.q }}">
+                            {% endif %}
+                            {% if request.GET.time_period %}
+                            <input type="hidden" name="time_period" value="{{ request.GET.time_period }}">
+                            {% endif %}
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="order_by"
+                                id="flexRadioDefault1" value="date" {% if request.GET.order_by == 'date' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault1">Oldest to Newest</label>
+                            </li>
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="order_by"
+                                id="flexRadioDefault2" value="-date" {% if request.GET.order_by == '-date' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault2">Newest to Oldest</label>
+                            </li>
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="order_by"
+                                id="flexRadioDefault3" value="-likes_count" {% if request.GET.order_by == '-likes_count' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault3">Likes</label>
+                            </li>    
+                            <li class="dropdown-item">
+                                <button type="submit" class="btn btn-primary">Apply</button>
+                            </li>
+                        </form>
+                    </ul>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        filters
+                    </button>
+                    <ul class="dropdown-menu">
+                        <form action="{% if request.GET.q %}{% url "blog:search" %}
+                            {% elif cat_slug %}{% url "blog:posts" cat_slug %}
+                            {% else %}{% url "blog:allposts" %}
+                            {% endif %}" method="get">
+                            {% if request.GET.q %}
+                            <input type="hidden" name="q" value="{{ request.GET.q }}">
+                            {% endif %}
+                            {% if request.GET.order_by %}
+                            <input type="hidden" name="order_by" value="{{ request.GET.order_by }}">
+                            {% endif %}
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="time_period"
+                                id="flexRadioDefault4" value="7" {% if request.GET.time_period == '7' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault4">this week</label>
+                            </li>
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="time_period"
+                                id="flexRadioDefault5" value="31" {% if request.GET.time_period == '31' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault5">this month</label>
+                            </li>
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="time_period"
+                                id="flexRadioDefault5" value="90" {% if request.GET.time_period == '90' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault5">last 3 months</label>
+                            </li>
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="time_period"
+                                id="flexRadioDefault5" value="year" {% if request.GET.time_period == 'year' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault5">this year</label>
+                            </li>
+                            <li class="dropdown-item">
+                                <button type="submit" class="btn btn-primary">Apply</button>
+                            </li>
                     </form>
-                </ul>
+                    </ul>
+                </div>
             </div>
+
     
             <a href="{% url "blog:create" %}" class="btn btn-outline-primary">+ add post</a>       
         </div>
