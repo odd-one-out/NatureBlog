@@ -17,18 +17,24 @@ from user.forms import UserUPdateForm
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 
+from unittest import mock
+from django.utils import timezone as django_tz
+from datetime import timedelta, datetime, timezone
+
 
 
 User = get_user_model()
 
 class DataSetTestCase(TestCase):
+    """
+    TestCase inherited class with data for testing - 2 posts
+    """
 
     @classmethod
     def setUpTestData(cls):
         cls.category = Category.objects.create(name='Insects')
         user = User.objects.create_user(username="Harry")
         cls.post  = cls.category.post_set.create(title="Nice butterfly", status='Published', description='I like it', author=user)
-        cls.post.likes.add(user)
 
         cls.category2 = Category.objects.create(name='Animals')
         user2 = User.objects.create_user(username="Hermione")
@@ -39,6 +45,7 @@ class DataSetTestCase(TestCase):
 
 class IndexTest(DataSetTestCase):
 
+    # getting data from parent class
     @classmethod
     def setUpTestData(cls):
         return super().setUpTestData()
@@ -49,11 +56,15 @@ class IndexTest(DataSetTestCase):
         self.assertEqual(resolve(url).func.view_class, IndexView)
         response = self.client.get(url)
         self.assertTemplateUsed(response, 'blog/index.html')
-        template_words = ['Nice butterfly', 'Insects', 'Nature Blog - Main', 'Tiger', 'Animals']
-        for i in template_words:
-            self.assertContains(response, i)
+
+        # ensure response contains strings from template
+        template_strings = ['Nice butterfly', 'Insects', 'Nature Blog - Main', 'Tiger', 'Animals']
+        for s in template_strings:
+            self.assertContains(response, s)
+
+        # ensure we get right querysets in context variables
         self.assertQuerySetEqual(response.context['categories'].order_by('id'), [self.category, self.category2])
-        self.assertQuerySetEqual(response.context['posts'], [self.post2, self.post]) # posts are ordered by -date, last comes forst in qs
+        self.assertQuerySetEqual(response.context['posts'], [self.post2, self.post]) # posts are ordered by -date by default
 
 
 
@@ -61,6 +72,7 @@ class IndexTest(DataSetTestCase):
 
 class PostPagesTest(DataSetTestCase):
 
+    # getting data from parent class
     @classmethod
     def setUpTestData(cls):
         return super().setUpTestData()
@@ -72,29 +84,16 @@ class PostPagesTest(DataSetTestCase):
         self.assertEqual(resolve(url).func.view_class, PostListView)
         response = self.client.get(url)
         self.assertTemplateUsed(response, 'blog/posts.html')
-        template_words = ['Nice butterfly', 'I like it', 'Nature Blog - posts', 'Tiger']
-        for i in template_words:
-            self.assertContains(response, i)
+
+        template_strings = ['Nice butterfly', 'I like it', 'Nature Blog - posts', 'Tiger']
+        for s in template_strings:
+            self.assertContains(response, s)
+
+        # check context variables
         posts = Post.objects.all()
-        self.assertQuerySetEqual(response.context['posts'].order_by('-date'), posts) # posts by default are ordered by -date
+        self.assertQuerySetEqual(response.context['posts'].order_by('-date'), posts) # posts.all() by default are ordered by -date
         self.assertIn('page_title', response.context)
         self.assertEqual(response.context['page_title'], 'All Posts')
-
-    def test_allposts_order_by(self):
-        url = reverse('blog:allposts')
-
-        # check posts order from newest to oldest
-        response1 = self.client.get(url, data={'order_by': '-date'})
-        self.assertQuerySetEqual(response1.context["posts"], [self.post2, self.post])
-
-        # check posts order from oldest to newest
-        response2 = self.client.get(url, data={'order_by': 'date'})
-        self.assertQuerySetEqual(response2.context["posts"], [self.post, self.post2])
-
-        # check posts order by likes
-        response3 = self.client.get(url, data={'order_by': '-likes_count'})
-        self.assertQuerySetEqual(response3.context["posts"], [self.post, self.post2])
-
 
     
     def test_search_path_and_view_and_template(self):
@@ -114,10 +113,16 @@ class PostPagesTest(DataSetTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/posts.html')
+
+        # ensure we get right category
         self.assertContains(response, 'Insects')
+        self.assertEqual(response.context['category'], self.category)
+
+        # ensure we get right post qs by this category
         posts = Post.objects.filter(category=self.category)
         self.assertQuerySetEqual(response.context['posts'], posts)
-        self.assertEqual(response.context['category'], self.category)
+
+        # check context variable
         self.assertIn('page_title', response.context)
         self.assertEqual(response.context['page_title'], None)
 
@@ -142,18 +147,112 @@ class PostPagesTest(DataSetTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/post_detail.html')
-        template_words = ['Nice butterfly', 'I like it', 'Harry']
-        for i in template_words:
-            self.assertContains(response, i)
-        template_context = ['title', 'liked', 'comment_form', 'comments']
-        for context in template_context:
-            self.assertIn(context, response.context)
+
+        # ensure we have these strings in template
+        template_strings = ['Nice butterfly', 'I like it', 'Harry']
+        for s in template_strings:
+            self.assertContains(response, s)
+
+        # ensure we get all context variables
+        context_vars = ['post', 'title', 'liked', 'comment_form', 'comments']
+        for var in context_vars:
+            self.assertIn(var, response.context)
 
     def test_post_detail_by_doesntexist_post_slug(self):
         url = reverse('blog:post', args=['doesntexist-post-slug'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
-   
+
+
+class PostFilterOrderbyTest(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+
+        cls.url = reverse('blog:allposts')
+        cls.category = Category.objects.create(name='test-cat')
+        cls.user = User.objects.create_user(username="post_user")
+        user_2 = User.objects.create_user(username='Like')
+        user_3 = User.objects.create_user(username='Like-2')
+
+        date_8_days_ago = django_tz.now()-timedelta(days=8)
+        date_31_days_ago = django_tz.now()-timedelta(days=31)
+        date_91_days_ago = django_tz.now()-timedelta(days=91)
+        
+        # create 4 posts with different dates for testing 
+        cls.today_post = Post.objects.create(title='today post', category=cls.category, author=cls.user)
+
+        # mock library allows to cheat django's timezone.now and create an object with a wrong date
+        with mock.patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = date_8_days_ago 
+            cls.last_week_post = Post.objects.create(title='8 days ago', category=cls.category, author=cls.user)
+
+            mock_now.return_value = date_31_days_ago 
+            cls.last_month_post = Post.objects.create(title='31 days ago', category=cls.category, author=cls.user)
+
+            mock_now.return_value = date_91_days_ago 
+            cls.oldest_post = Post.objects.create(title='91 days ago', category=cls.category, author=cls.user)
+
+        cls.last_week_post.likes.add(cls.user, user_2, user_3) # 3 likes
+        cls.oldest_post.likes.add(cls.user, user_2) # 2 likes
+        cls.today_post.likes.add(cls.user) # 1 like
+        # last_month_post has 0 likes
+        print(f'this post has {cls.last_month_post.likes}') # why it prints None???
+
+    def test_allposts_order_by(self):
+
+        # check posts order from newest to oldest
+        response = self.client.get(self.url, data={'order_by': '-date'})
+        self.assertQuerySetEqual(response.context["posts"], [self.today_post, self.last_week_post, self.last_month_post, self.oldest_post])
+
+        # check posts order from oldest to newest
+        response = self.client.get(self.url, data={'order_by': 'date'})
+        self.assertQuerySetEqual(response.context["posts"], [self.oldest_post, self.last_month_post, self.last_week_post, self.today_post])
+
+        # check posts order by likes
+        response = self.client.get(self.url, data={'order_by': '-likes_count'})
+        self.assertQuerySetEqual(response.context["posts"], [self.last_week_post, self.oldest_post, self.today_post, self.last_month_post])
+
+    def test_allposts_filters(self):
+
+        # check this week filter: only today_post should be in a qs as it is created now
+        response = self.client.get(self.url, data={'time_period': '7'})
+        self.assertQuerySetEqual(response.context["posts"], [self.today_post])
+
+        # check this month filter: only today_post and last_week_post should be in qs
+        response = self.client.get(self.url, data={'time_period': '30'})
+        self.assertEqual(response.context["posts"].count(), 2)
+        self.assertIn( self.today_post, response.context["posts"]) # container here is a queryset instance
+        self.assertIn( self.last_week_post, response.context["posts"])
+        
+        # check last 3 months filter: should be 3 posts in qs: today, last_week, last_month
+        response = self.client.get(self.url, data={'time_period': '90'})
+        self.assertEqual(response.context["posts"].count(), 3)
+        self.assertNotIn( self.oldest_post, response.context["posts"])
+
+    def test_check_this_year_filter(self):
+
+        with mock.patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = datetime(2025, 12, 31, tzinfo=timezone.utc)
+            wrong_year_post = Post.objects.create(title='2025 year post', category=self.category, author=self.user)
+        
+        #check this year filter: wrong_year post should't be in qs
+        response = self.client.get(self.url, data={'time_period': 'year'})
+        self.assertNotIn( wrong_year_post, response.context["posts"])
+
+    def test_filter_and_order_by_together(self):
+
+        # check filter - last 3 months, order_by - newest to oldest, should be 3 posts in qs
+        response = self.client.get(self.url, data={'order_by': '-date', 'time_period': '90'})
+        self.assertQuerySetEqual(response.context["posts"], [self.today_post, self.last_week_post, self.last_month_post])
+
+        # check filter - this month, order_by - oldest to newest, should be 2 posts in qs
+        response = self.client.get(self.url, data={'order_by': 'date', 'time_period': '30'})
+        self.assertQuerySetEqual(response.context["posts"], [self.last_week_post, self.today_post])
+
+        # check filter - last 3 months, order_by - likes, should be 3 posts in qs
+        response = self.client.get(self.url, data={'order_by': '-likes_count', 'time_period': '90'})
+        self.assertQuerySetEqual(response.context["posts"], [self.last_week_post, self.today_post, self.last_month_post])
 
       
 # python manage.py test tests.test_views.UserTest
@@ -175,8 +274,10 @@ class UserTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'user/login.html')
-        self.assertIn('Nature Blog - login', response.content.decode()) # порядок именно такой, т к проверяется вхождение строки в контент
-        self.assertIn('form', response.context) # Check if 'form' is in the context
+        self.assertContains(response, 'Nature Blog - login')
+
+        # Ensure we get right form
+        self.assertIn('form', response.context) 
         self.assertIsInstance(response.context['form'], AuthenticationForm)
 
     def test_login_success_redirect(self):
@@ -192,10 +293,13 @@ class UserTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'user/register.html')
-        html_phrases = ['Username', 'Password confirmation:', 'Register', 'Nature Blog - register']
-        for i in html_phrases:
-            self.assertIn(i, response.content.decode())
-        self.assertIn('form', response.context) # Check if 'form' is in the context
+        
+        template_strings = ['Username', 'Password confirmation:', 'Register', 'Nature Blog - register']
+        for s in template_strings:
+            self.assertContains(response, s)
+
+        # Ensure we get right form
+        self.assertIn('form', response.context)
         self.assertIsInstance(response.context['form'], UserCreationForm)
 
     def test_register_success_redirect(self):
@@ -224,8 +328,10 @@ class UserTest(TestCase):
         self.client.force_login(user=self.user)
         response = self.client.post(reverse('user:profile'))
         self.assertTemplateUsed(response, 'user/profile.html')
-        self.assertIn('Nature Blog - profile', response.content.decode()) # порядок именно такой, т к проверяется вхождение строки в контент
-        self.assertIn('form', response.context) # Check if 'form' is in the context
+        self.assertContains(response, 'Nature Blog - profile')
+
+        # ensure we get right form
+        self.assertIn('form', response.context)
         self.assertIsInstance(response.context['form'], UserUPdateForm)
 
     def test_change_info_post_request_with_logged_user(self):
@@ -235,7 +341,7 @@ class UserTest(TestCase):
         self.assertRedirects(response, reverse('user:profile'))
 
 
-    def test_pass_reset_path_and_template(self):
+    def test_password_reset_path_and_template(self):
         url = reverse('user:password_reset')
         self.assertEqual(url, '/password_reset/')
         response = self.client.get(url)
@@ -246,7 +352,7 @@ class UserTest(TestCase):
     def test_pass_reset_post_request_with_unregisted_user_email(self):
         data = {'email': 'notregistered@mail.com'}
         response = self.client.post(reverse('user:password_reset'), data=data)
-        self.assertRedirects(response, reverse('user:password_reset_done'))
+        self.assertRedirects(response, reverse('user:password_reset_done')) # and what???
 
     def test_pass_reset_post_request_with_registed_user_email(self):
         data = {'email': 'potter@gmail.com'}
@@ -254,7 +360,7 @@ class UserTest(TestCase):
         self.assertRedirects(response, reverse('user:password_reset_done'))
 
 
-    def test_pass_reset_done_path__and_template_for_not_logged_user(self):
+    def test_pass_reset_done_path_and_template_for_not_logged_user(self):
         url = reverse('user:password_reset_done')
         self.assertEqual(url, '/password_reset_done/')
         response = self.client.get(url)
@@ -283,6 +389,7 @@ class UserPostTest(TestCase):
 
         # this user created 1 post, has no fav posts, hasn't written comments
         cls.user2 = User.objects.create(username='Snow White', password='redapple')
+
         cls.category = Category.objects.create(name='Insects')
         cls.post  = cls.category.post_set.create(title="Nice butterfly", status='Published', author=cls.user2)
         cls.post.likes.add(cls.user1)
@@ -298,6 +405,7 @@ class UserPostTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/create_post.html')
         self.assertContains(response, 'Nature Blog - create post')
+
         context_vars = ['form' , 'page_title', 'btn_name']
         for var in context_vars:
             self.assertIn(var, response.context)
@@ -324,6 +432,7 @@ class UserPostTest(TestCase):
         self.assertTemplateUsed(response, 'blog/create_post.html')
         self.assertContains(response, 'Nature Blog - edit post')
         self.assertContains(response, 'Update')
+        
         context_vars = ['form', 'page_title', 'btn_name']
         for var in context_vars:
             self.assertIn(var, response.context)
@@ -366,11 +475,15 @@ class UserPostTest(TestCase):
 
 
     def test_post_delete_post_request(self):
+        # create post and ensure it exists
         post_to_delete = Post.objects.create(title='to_delete', category=self.category, author=self.user1)
         self.assertTrue(Post.objects.filter(title='to_delete').exists())
+
         self.client.force_login(user=self.user1)
         response = self.client.post(reverse('blog:deletepost', args=[post_to_delete.id]), follow=True)
         self.assertRedirects(response, reverse('user:profile'), status_code=302)
+
+        # ensure post is deleted
         self.assertFalse(Post.objects.filter(title='to_delete').exists())
         self.assertContains(response, 'your post was deleted')
 
@@ -383,15 +496,18 @@ class UserPostTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/user_posts_and_likes.html')
-        template_words = ['Nature Blog - my posts', 'My posts', 'butterfly', 'Snow White']
-        for word in template_words:
-            self.assertIn(word, response.content.decode())
-        self.assertQuerySetEqual(response.context['posts'], [self.post])
+
+        template_strings = ['Nature Blog - my posts', 'My posts', 'butterfly', 'Snow White']
+        for s in template_strings:
+            self.assertContains(response, s)
+
+        # ensure user2 gets only his posts
+        self.assertQuerySetEqual(response.context['posts'], [self.post]) 
 
     def test_no_userposts(self):
-        self.client.force_login(self.user1)
+        self.client.force_login(self.user1) # user1 has no posts
         response = self.client.get(reverse('blog:userposts'))
-        self.assertIn('posted anything yet :(', response.content.decode())
+        self.assertContains(response, 'You haven&#x27;t posted anything yet :(') # &#x27; - means sign '
 
 
     def test_user_likes_path_and_view_and_template(self):
@@ -402,15 +518,18 @@ class UserPostTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/user_posts_and_likes.html')
-        template_words = ['Nature Blog - my favourites', 'Favourite posts', 'butterfly', 'Snow White']
-        for word in template_words:
-            self.assertIn(word, response.content.decode())
+
+        template_strings = ['Nature Blog - my favourites', 'Favourite posts', 'butterfly', 'Snow White']
+        for s in template_strings:
+            self.assertContains( response, s)
+
+        # user1 liked only one post
         self.assertQuerySetEqual(response.context['posts'], [self.post])
 
     def test_no_userlikes(self):
-        self.client.force_login(self.user2)
+        self.client.force_login(self.user2) # user2 liked no post
         response = self.client.get(reverse('blog:userlikes'))
-        self.assertIn('got favourite posts yet :(', response.content.decode())
+        self.assertContains(response, 'You haven&#x27;t got favourite posts yet :(') # &#x27; - means sign '
 
 
     def test_user_comments_view_and_template(self):
@@ -421,11 +540,14 @@ class UserPostTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/user_comments.html')
-        template_words = ['Nature Blog - my comments', 'great', 'butterfly']
-        for word in template_words:
-            self.assertIn(word, response.content.decode())
+
+        template_strings = ['Nature Blog - my comments', 'great', 'butterfly']
+        for s in template_strings:
+            self.assertContains( response, s)
+
+        # ensure user1 gets his comments
         self.assertIn('comments', response.context)
-        comment = Comment.objects.filter(post=self.post)
+        comment = Comment.objects.filter(user=self.user1)
         self.assertQuerySetEqual(response.context['comments'], comment)
 
 
@@ -435,21 +557,25 @@ class UserPostTest(TestCase):
         self.assertEqual(resolve(url).func, delete_comment)
 
     def test_comment_delete_by_its_user(self):
-        comment = Comment.objects.create(text='hello', user=self.user2, post=self.post)
+        comment = Comment.objects.create(text='comment for delete', user=self.user2, post=self.post)
         url = reverse('blog:delete_comment', args=[comment.id])
         self.client.force_login(user=self.user2)
         response = self.client.get(url, follow=True)
         self.assertRedirects(response, reverse('user:profile'), status_code=302)
-        self.assertFalse(Comment.objects.filter(text='hello').exists())
+
+        # ensure comment is deleted
+        self.assertFalse(Comment.objects.filter(text='comment for delete').exists())
         self.assertContains(response, 'is deleted')
 
     def test_comment_delete_by_wrong_user(self):
-        comment = Comment.objects.create(text='hello', user=self.user2, post=self.post)
+        comment = Comment.objects.create(text='comment for delete', user=self.user2, post=self.post)
         url = reverse('blog:delete_comment', args=[comment.id])
         self.client.force_login(user=self.user1)
         response = self.client.get(url, follow=True)
         self.assertEqual(response.status_code, 403)
-        self.assertTrue(Comment.objects.filter(text='hello').exists())
+
+        # ensure comment is not deleted
+        self.assertTrue(Comment.objects.filter(text='comment for delete').exists())
 
 
 
