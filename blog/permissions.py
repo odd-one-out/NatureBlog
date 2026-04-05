@@ -1,5 +1,6 @@
 from rest_framework import permissions
 
+# used in rest api only
 
 class IsAuthorOrReadOnly(permissions.BasePermission):
     """

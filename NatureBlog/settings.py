@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# to avoid conflicts with debug toolbar while testing we need these settings:
 TESTING = "test" in sys.argv or "PYTEST_VERSION" in os.environ
 
 if not TESTING:
@@ -96,10 +97,9 @@ WSGI_APPLICATION = 'NatureBlog.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# postgesql db is used
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': BASE_DIR / 'db.sqlite3',
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('BLOG_DB_NAME'),
         'USER': os.getenv('DB_USER'),
@@ -167,7 +167,7 @@ INTERNAL_IPS = [
     # ...
 ]
 
-
+# email backend is used for changing user's password (send a link to set a new one)
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = BASE_DIR / 'emails'
 

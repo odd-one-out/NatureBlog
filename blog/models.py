@@ -5,10 +5,24 @@ from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 
 
+# if User is deleted, author field in a Post model will be given a sentinel_user
+def get_sentinel_user():
+    return User.objects.get_or_create(username="deleted")[0]
+
+
+# ensure file size is within the limit(20mb)
+# this function is used as a validator for a video file field of a Post model
+def file_size(value): 
+    limit = 20 * 1024 * 1024 # 20mb
+    if value.size > limit:
+        raise ValidationError('File is too big. File size should not be more than 20Mb')
+
+
 User = get_user_model()
 
+
 class Category(models.Model):
-    '''Posts categories'''
+    """Posts categories"""
 
     name = models.CharField(max_length=30, unique=True)
     slug = models.SlugField(max_length=35, unique=True, blank=True, null=True)
@@ -26,18 +40,9 @@ class Category(models.Model):
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
     
-
-def get_sentinel_user():
-    return User.objects.get_or_create(username="deleted")[0]
-
-# Source - https://stackoverflow.com/a
-def file_size(value): # add this to some file where you can import it from
-    limit = 20 * 1024 * 1024 # 20mb
-    if value.size > limit:
-        raise ValidationError('File is too big. File size should not be more than 3Mb')
-    
+ 
 class Post(models.Model):
-    '''Post'''
+    """Post"""
     
     STATUS = (
         ('Checking', 'Checking'),
@@ -71,7 +76,7 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
-    '''Comment to post'''
+    """Comment to post"""
     text = models.TextField(max_length=300)
     date = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

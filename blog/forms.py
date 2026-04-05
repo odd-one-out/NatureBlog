@@ -4,7 +4,9 @@ from blog.models import Post, Comment
 
 
 class PostForm(ModelForm):
-
+    """
+    Users create their posts via this form
+    """
     class Meta:
         model = Post
         fields = ('title', 'description', 'image1', 'image2', 'image3', 'video_file', 'category')
@@ -16,7 +18,9 @@ class PostForm(ModelForm):
 
 
 class CommentForm(ModelForm):
-
+    """
+    Users comment to a post via this form
+    """
     class Meta:
         model = Comment
         fields = ('text',)

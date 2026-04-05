@@ -7,19 +7,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-
 from django.shortcuts import redirect, get_object_or_404
-from django.urls import reverse_lazy
-
-from django.db.models import Count, Max
-
 from django.http import HttpResponseForbidden, Http404
+from django.urls import reverse_lazy
+from django.db.models import Count, Max
 
 from blog.models import Category, Post, Comment
 from blog.forms import PostForm, CommentForm
 from blog.utils import search_post
 
-
+# rest framework
 from rest_framework import generics, viewsets
 from rest_framework.views import APIView 
 from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly, IsAuthenticated
@@ -45,10 +42,22 @@ class IndexView(TemplateView):
 class PostListView(ListView):
 
     template_name = 'blog/posts.html'
-    #model = Post так выбирутся все товары из бд, т. к. это тоже, что и Post.objects.all()
+    #model = Post так выбирутся все товары из бд, т. к. это тоже, что и Post.objects.all(), вместо этого используем get_queryset
     context_object_name = 'posts'
     page_title = None
 
+    #ANNOTATE EXPLANATION
+# СУБД умеет выполнять анализ данных на своей стороне(подсчет средних значений и пр) и сам язык SQL содержит средства для описания того,
+# что же СУБД должна вычислить или, как ещё говорят, выполнить агрегацию
+# это необходимо, чтоб не запрашивать лишнее.
+# в django для получения из бд уже аггрегированных данных есть ф-ция queryset-a aggregate, 
+# ее параметры - спец аггрегирующие ф-ции: Avg, Count, Max, Min
+# Процесс, при котором к каждому объекту из выборки применяется агрегирующая функция, назвается аннотированием. 
+#  .aggregate(Count('postcomment')) подсчитает количество всех комментариев,
+#  .annotate(Count('postcomment')) даст количество комментариев к каждому посту. 
+# против дублирующихся записей в бд - distinct=True
+
+    # depending on filter and category this func returns different querysets of posts
     def get_queryset(self):
         posts = Post.objects.annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
 
@@ -83,30 +92,18 @@ class PostListView(ListView):
 
         return posts
     
-#ANNOTATE EXPLANATION
-# СУБД умеет выполнять анализ данных на своей стороне(подсчет средних значений и пр) и сам язык SQL содержит средства для описания того,
-# что же СУБД должна вычислить или, как ещё говорят, выполнить агрегацию
-# это необходимо, чтоб не запрашивать лишнее.
-# в django для получения из бд уже аггрегированных данных есть ф-ция queryset-a aggregate, 
-# ее параметры - спец аггрегирующие ф-ции: Avg, Count, Max, Min
-# Процесс, при котором к каждому объекту из выборки применяется агрегирующая функция, назвается аннотированием. 
-#  .aggregate(Count('postcomment')) подсчитает количество всех комментариев,
-#  .annotate(Count('postcomment')) даст количество комментариев к каждому посту. 
-# против дублирующихся записей в бд - distinct=True
-
 
     # динамически загружающийся контент нельзя передать через extra_context,
     # поэтому используем метод get_context_data()
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Nature Blog - posts'
+        context['page_title'] = self.page_title
         context['empty_text'] = 'Sorry, no posts found'
         slug = self.kwargs.get('cat_slug')
         context['cat_slug'] = slug
         if slug:
             context['category'] = get_object_or_404(Category, slug=slug)
-        context['page_title'] = self.page_title
-
         return context
     
 
@@ -119,6 +116,8 @@ class PostView(DetailView):
     def get_queryset(self):
         return Post.objects.select_related('author')
 
+    # this func is used to submit comment or like depending on a POST request param,
+    # available only for logged in users
     def post(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             messages.warning(request, 'Please, log in to leave a comment')
@@ -151,7 +150,7 @@ class PostView(DetailView):
         context = super().get_context_data(**kwargs)
         #post = Post.objects.get(slug=self.kwargs.get(self.slug_url_kwarg))
         context['title'] = str(self.object)
-        context['liked'] = self.object.likes.filter(pk=self.request.user.id).exists()
+        context['liked'] = self.object.likes.filter(pk=self.request.user.id).exists() # this context is needed to color heart red in html if user liked post
         context['comment_form'] = CommentForm()
         context['comments'] = Comment.objects.filter(post=self.object).select_related('user').only('text', 'date', 'user__username')
         return context
@@ -168,7 +167,7 @@ class CreatePostView(LoginRequiredMixin, FormView):
     extra_context = {
         'title': 'Nature Blog - create post',
         'page_title': 'Post creation',
-        'btn_name': 'Create post'
+        'btn_name': 'Create post' # this is needed because the same template is also used for editing post
     }
 
     def form_valid(self, form):
@@ -188,7 +187,7 @@ class EditPostView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     extra_context = {
         'title': 'Nature Blog - edit post',
         'page_title': 'Post editing',
-        'btn_name': 'Edit post'
+        'btn_name': 'Edit post' # this is needed because the same template is also used for creating post
     }
 
     def test_func(self):
@@ -238,10 +237,12 @@ def delete_comment(request, comment_id):
 
 
 class UserPostsandLikesView(LoginRequiredMixin, ListView):
+    """ One class for showing posts created by user and posts that user liked """
 
     template_name = 'blog/user_posts_and_likes.html'
     context_object_name = 'posts'
 
+    # depending on request's path this func returns different querysets of posts: user's posts or posts that user liked
     def get_queryset(self):
         if '/user-posts/' in self.request.path:
             return Post.objects.filter(author=self.request.user).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')

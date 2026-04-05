@@ -4,6 +4,7 @@ from django.contrib.postgres.search import (
     SearchRank,
 )
 
+# used for searching posts on the site by post title, author, description
 def search_post(query, qs):
     vector = SearchVector("title", "description", "author__username")
     search_words = SearchQuery(query)

@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 
 
 class PostSerializer(serializers.ModelSerializer):
+    """Serializer based on a Post Model(almost all fields), includes comments for each post"""
     
     user = serializers.ReadOnlyField(source='author.username')
     comments = serializers.SerializerMethodField()
@@ -20,6 +21,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    """Serializer based on a Category Model, includes posts for category"""
 
     posts_in_category = serializers.SerializerMethodField()
 
@@ -32,6 +34,7 @@ class CategorySerializer(serializers.ModelSerializer):
     
 
 class BlogInfoSerializer(serializers.Serializer):
+    """ Serializer for admins to get general info about posts"""
 
     category = CategorySerializer(many=True)
     total_posts = serializers.IntegerField()
@@ -40,6 +43,7 @@ class BlogInfoSerializer(serializers.Serializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """Serializer based on a Comment Model"""
 
     user = serializers.ReadOnlyField(source='user.username')
     post = serializers.ReadOnlyField(source='post.title')
@@ -50,7 +54,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-
+    """Serializer based on a User Model"""
+    
     class Meta:
         model = get_user_model()
         fields = '__all__'
