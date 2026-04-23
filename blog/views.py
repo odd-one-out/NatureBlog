@@ -1,4 +1,5 @@
 from django.forms import ValidationError
+from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
 from django.views.generic import DetailView, UpdateView, ListView
 from django.views.generic.edit import FormView, DeleteView
@@ -118,10 +119,11 @@ class PostView(DetailView):
 
     # this func is used to submit comment or like depending on a POST request param,
     # available only for logged in users
+    @method_decorator(login_required)
+    # Standard Django decorators (like @login_required) are designed for standalone view functions and expect a request object as the first argument,
+    # whereas class methods expect self
+    # method_decorator acts as a bridge, transforming the function decorator into one that correctly handles the self argument of a class method.
     def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            messages.warning(request, 'Please, log in to leave a comment')
-            return redirect('user:login')
         
         post = Post.objects.get(slug=self.kwargs.get(self.slug_url_kwarg))
 
@@ -133,9 +135,11 @@ class PostView(DetailView):
                     Comment.objects.create(text=text, user=request.user, post=post)
                     messages.success(request, 'Your comment is added)')
                 except ValidationError:
-                    messages.error(request, 'unable to create post - validation error')
+                    messages.error(request, 'unable to create comment - validation error')
                 except (TypeError, ValueError):
-                    messages.error(request, 'unable to create post - wrong data')
+                    messages.error(request, 'unable to create comment - wrong data')
+            else:
+                messages.error(request, 'unable to create comment, maybe it\'s too long')
 
         elif 'submit-like' in request.POST:
             if post.likes.filter(pk=request.user.id).exists():
@@ -244,10 +248,12 @@ class UserPostsandLikesView(LoginRequiredMixin, ListView):
 
     # depending on request's path this func returns different querysets of posts: user's posts or posts that user liked
     def get_queryset(self):
+        posts = Post.objects.annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
         if '/user-posts/' in self.request.path:
-            return Post.objects.filter(author=self.request.user).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+            posts = posts.filter(author=self.request.user)
         elif '/user-likes/' in self.request.path:
-            return Post.objects.filter(likes__id=self.request.user.id).annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+            posts = posts.filter(likes__id=self.request.user.id)
+        return posts
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
