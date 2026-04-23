@@ -29,6 +29,7 @@ class CategoryTest(TestCase, TestMaxlenghtMixin):
 
     @classmethod
     def setUpTestData(cls):
+        # setting test data for all the CategoryTest tests, this data shouldn\'t be changed in tests!
         categories = [ 
         Category(name=f'cat-{i}') for i in range(1,10)
         ]
@@ -55,18 +56,10 @@ class CategoryTest(TestCase, TestMaxlenghtMixin):
         self.assertEqual(str(self.category), self.category.name)
         
     def test_max_length(self):
+        # calling TestMaxLenghMixin method
         super().run_max_length_test(Category)
 
-    def test_category_fields(self):
-        # real_name_max_length = self.category._meta.get_field('name').max_length
-        # self.assertEqual(real_name_max_length, 30)
-
-        # real_slug_max_length = self.category._meta.get_field('slug').max_length
-        # self.assertEqual(real_slug_max_length, 35)
-
-        # real_description_max_length = self.category._meta.get_field('description').max_length
-        # self.assertEqual(real_description_max_length, 300)
-
+    def test_category_field_image(self):
         real_img_folder_name = self.category._meta.get_field('image').upload_to
         self.assertEqual(real_img_folder_name, 'category_images')
 
@@ -78,6 +71,7 @@ class PostTest(TestCase, TestMaxlenghtMixin):
 
     @classmethod
     def setUpTestData(cls):
+        # setting test data for all the PostTest tests, this data shouldn\'t be changed in tests!
         cls.cat = Category.objects.create(name='best')
         cls.author = User.objects.create(username="First")
         post_list = [
@@ -106,10 +100,10 @@ class PostTest(TestCase, TestMaxlenghtMixin):
 
     def test_post_with_deleted_user(self):
         user = User.objects.create(username='Jane')
-        post = Post.objects.create(title='no_user_post', category=self.cat, author=user)
+        post = Post.objects.create(title='deleted_user_post', category=self.cat, author=user)
         self.assertEqual(post.author.username, 'Jane')
         user.delete()
-        no_user_post = Post.objects.get(title='no_user_post')
+        no_user_post = Post.objects.get(title='deleted_user_post')
         self.assertEqual(no_user_post.author.username, 'deleted')
 
     def test_qs_and_object(self):
@@ -125,17 +119,10 @@ class PostTest(TestCase, TestMaxlenghtMixin):
         self.assertEqual(str(self.post), self.post.title)
 
     def test_max_length(self):
+        # calling TestMaxLenghMixin method
         super().run_max_length_test(Post)
 
     def test_post_fields(self):
-        # real_title_max_length = self.post._meta.get_field('title').max_length
-        # self.assertEqual(real_title_max_length, 30)
-
-        # real_slug_max_length = self.post._meta.get_field('slug').max_length
-        # self.assertEqual(real_slug_max_length, 35)
-
-        # real_description_max_length = self.post._meta.get_field('description').max_length
-        # self.assertEqual(real_description_max_length, 500)
 
         real_img_folder_name = self.post._meta.get_field('image1').upload_to
         self.assertEqual(real_img_folder_name, 'post_images')
@@ -150,17 +137,19 @@ class PostTest(TestCase, TestMaxlenghtMixin):
         self.assertEqual(Post._meta.ordering, ['-date'])
 
 
-class CommentTest(TestCase):
+class CommentTest(TestCase, TestMaxlenghtMixin):
 
     @classmethod
     def setUpTestData(cls):
+         # setting test data for all the CommentTest tests, this data shouldn\'t be changed in tests!
         c = Category.objects.create(name='bees')
         User = get_user_model()
         u = User.objects.create(username='Barbie')
         p = Post.objects.create(title='bumblebee', author=u, category=c)
         cls.comment = Comment.objects.create(text='wow wow wow', user=u, post=p)
+        cls.field_and_max_length = {'text': 300}
 
-    def test_not_null_fk(self):
+    def test_comment_creation_with_null_fk(self):
         try:
             Comment.objects.create(text='bl bla bla')
         except Exception as e:
@@ -176,9 +165,9 @@ class CommentTest(TestCase):
         self.assertEqual(str(self.comment), 'comment by Barbie to "bumblebee"')
         self.assertTrue('seconds' in self.comment.show_date())
 
-    def test_comment_fields(self):
-        real_text_max_length = self.comment._meta.get_field('text').max_length
-        self.assertEqual(real_text_max_length, 300)
+    def test_comment_max_length(self):
+        # calling TestMaxLenghMixin method
+        super().run_max_length_test(Comment)
 
     def test_post_meta(self):
         self.assertEqual(Post._meta.ordering, ['-date'])
