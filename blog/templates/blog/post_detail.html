@@ -48,10 +48,11 @@
         {% endif %}
 
         {% comment %}all post info block {% endcomment %}
-        <div class="container pt-3 mb-2">
+        <div class="container pt-2 mb-2">
             <div class="card-body">
-                <div class="d-flex justify-content-between"> 
-                    <p>{{ post.date|date:'F, j' }}</p>
+                <p class="mb-0 fw-medium">{{ post.date|date:'F j, Y' }}</p>
+                <p class="fs-5 mb-2">{{ post.description }}</p>
+                <div class="d-flex justify-content-between border-bottom border-success-subtle"> 
                      <div class="d-flex align-items-center">                   
                     
                         {% comment %} like-dislike form {% endcomment %}
@@ -70,16 +71,16 @@
                         <i class="fa-regular fa-comment"></i>
                         <p>{{ comments|length }}</p>
                     </div>
+                    <p class="fst-italic">posted by {{ post.author }}</p>
                 </div>
-                <p class="fs-5 mb-2">{{ post.description }}</p>
-                <p class="fst-italic">posted by {{ post.author }}</p>
 
                 {% comment %} comment form {% endcomment %}
                 <form action="{% url 'blog:post' post.slug %}" method="post">
                     <div class="d-flex flex-row mt-4">
                         {% csrf_token %}
                         {{ comment_form.text }}
-                        {{ comment_form.text.errors}}
+                        {{ comment_form.text.errors }}
+                        {{ comment_form.non_field_errors }}
                         <button class="btn btn-primary ms-2" type="submit" name="submit-comment">Comment</button>
                     </div>
                 </form>
@@ -87,37 +88,36 @@
                 {% comment %} all comments for this post block {% endcomment %}
                 <div class="mt-4">
                     <p class="fs-5 mt-2">Comments:</p>
-                    {% for comment in comments  %}
+                    {% for comment in comments %}
                     <div class="my-3">
                         <div class="d-flex align-items-center">
                             <span class=" fw-semibold me-3">{{ comment.user.username }}</span>
                             <span class="fst-italic me-3">{{ comment.show_date }}</span>
                             {% if user.username == comment.user.username %}
-                                 <a href="{% url "blog:delete_comment" comment.id %}"><i class="fa-solid fa-xmark" style="color: #E01305;"></i></a>
+                                 <a href="{% url "blog:delete_comment" comment.id %}"><i class="fa-regular fa-trash-can" style="color: #E01305;"></i></a>
                             {% endif %}
                         </div>
                         <p class="card-text mb-0">{{ comment.text }}
                         </p>
                     </div>
+                    {% empty %}
+                    <p style="color: grey;">No comments for this post yet</p>
                     {% endfor %}
                 </div>
-
-                {% if user.id == post.author.id %}
-                <div class="d-flex justify-content-end">
-                    <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary flex-end me-3">edit post</a>
-                    <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger flex-end">delete post</a>
-                </div>
-                {% endif %}
             </div>
         </div>
 
         {% comment %} block for not published yet post {% endcomment %}
         {% else %}
         <h4 class="mb-3">post {{ post.id }} is on moderation now. It will appear here very soon)</h4>
-            {% if user.id == post.author.id %}
-                <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary me-3">edit post</a>
-                <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger">delete post</a>
-            {% endif %}
+        {% endif %}
+
+        {% comment %} edit&delete post buttons {% endcomment %}
+        {% if user.id == post.author.id %}
+           <div class="d-flex justify-content-end">    
+                <a href="{% url "blog:editpost" post.pk %}" class="btn btn-primary flex-end me-3">edit post</a>
+                <a href="{% url "blog:deletepost" post.pk %}" class="btn btn-danger flex-end">delete post</a>
+            </div>
         {% endif %}
     </div>
 {% endblock content %}

@@ -8,7 +8,7 @@
 {% endblock css %}
 
 {% block content %}
-    <div class="container-fluid mb-4">
+    <div class="container mb-4">
         <h4 class="text-center">Hi! Welcome to my nature blog. Hope, you'll like it!</h4>
         <p class="text-center font-monospace fw-light mb-0 mt-3">latest posts</p>
         <div id="carouselExampleCaptions" class="carousel slide mb-3" data-bs-ride="carousel">
@@ -37,7 +37,9 @@
                         <img src="{{ p.image3.url }}" class="d-block w-100" alt="{{ p.title }}">
                     </a>
                     {% else %}
-                    <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
+                    <a href="{% url "blog:post" p.slug %}" class="h-100">
+                        <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
+                    </a>
                     {% endif %}
                     <div class="carousel-caption d-none d-md-block">
                         <h5>{{ p.title }}</h5>
@@ -67,26 +69,28 @@
             reiciendis,
             amet alias pariatur dolorum molestias recusandae similique quidem.</p>
     </div>
-    <div class="row">
-        {% cache 600 cache_categories %}
-        {% for c in categories %}
-        <div class="col-lg-4 col-md-4 col-12 my-2">
-            <div class="card">
-                <a href="{% url "blog:posts" c.slug %}">
-                    {% if c.image %}
-                    <img src="{{c.image.url}}" class="card-img-top" alt="{{c.name}}">
-                    {% else %}
-                    <img src="{% static "images/no_image.jpg" %}" class="card-img-top" alt="{{c.name}}">
-                    {% endif %}
-                </a>
-                <div class="card-body">
-                    <h5 class="card-title">{{c.name}}</h5>
-                    <p class="card-text">{{c.description}}</p>
+    <div class="container">
+        <div class="row">
+            {% cache 600 cache_categories %}
+            {% for c in categories %}
+            <div class="col-lg-4 col-md-4 col-12 my-2">
+                <div class="card">
+                    <a href="{% url "blog:posts" c.slug %}">
+                        {% if c.image %}
+                        <img src="{{c.image.url}}" class="card-img-top" alt="{{c.name}}">
+                        {% else %}
+                        <img src="{% static "images/no_image.jpg" %}" class="card-img-top" alt="{{c.name}}">
+                        {% endif %}
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">{{c.name}}</h5>
+                        <p class="card-text">{{c.description}}</p>
+                    </div>
+                    <a href="{% url "blog:posts" c.slug %}" class="btn btn-primary btn-lg mt-auto">view posts</a>
                 </div>
-                <a href="{% url "blog:posts" c.slug %}" class="btn btn-primary btn-lg mt-auto">view posts</a>
             </div>
+            {% endfor %}
+            {% endcache %}
         </div>
-        {% endfor %}
-        {% endcache %}
     </div>
 {% endblock content %}
