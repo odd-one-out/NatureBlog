@@ -3,14 +3,13 @@
 {% if messages %}
 {% for message in messages %}
     {% if message.tags == 'success' %}
-        <div class="position-fixed start-50 translate-middle-x mt-4 z-1 alert alert-success alert-dismissible fade show" role="alert">{{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="position-fixed start-50 translate-middle-x mt-4 z-1 alert alert-success alert-dismissible fade show" id="disappear" role="alert">{{ message }}
         </div>
     {% endif %}
     {% if message.tags == 'warning' or message.tags == 'error' %}
-    <div class="position-fixed start-50 translate-middle-x mt-4 z-1 alert alert-danger alert-dismissible fade show" role="alert">{{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+        <div class="position-fixed start-50 translate-middle-x mt-4 z-1 alert alert-danger alert-dismissible fade show" id="disappear" role="alert">{{ message }}
+        </div>
     {% endif %}
 {% endfor %}
 {% endif %}
+.

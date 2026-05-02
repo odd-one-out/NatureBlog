@@ -101,5 +101,17 @@
         integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous">
         </script>
     <script src="https://kit.fontawesome.com/cca3bdfdf5.js" crossorigin="anonymous"></script>
+
+    {% comment %} js script to hide the messages in 3sec {% endcomment %}
+    <script>
+        function hideMessage() {
+            const msg = document.getElementById('disappear');
+            if (msg) {
+                msg.style.display = 'none';
+            }
+        }
+        setTimeout(hideMessage, 3000);
+    </script>
+    
     {% block js %}{% endblock js %}
 </body>
