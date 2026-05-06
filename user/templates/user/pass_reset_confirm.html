@@ -11,16 +11,16 @@
         <h4>Please enter your new password twice so we can verify you typed it in correctly.</h4>     
         {% for field in form %}
             <div class="my-4">
-            {{ field.errors }}
+            <span class="red-string">{{ field.errors }}</span>
             {{ field.label_tag }} {{ field }}
             </div>
         {% endfor %}
-
+        <div class="fw-bold red-string">{{ form.non_field_errors }}</div>
         <button type="submit" class="btn btn-primary">Change password</button>
         </form>
 
     {% else %}
-    <p class="p-4">The password reset link was invalid, possibly because it has already been used.  Please request a new password reset.</p>
+    <p class="p-4 red-string">The password reset link was invalid, possibly because it has already been used.  Please request a new password reset.</p>
     {% endif %}
 </div>
 

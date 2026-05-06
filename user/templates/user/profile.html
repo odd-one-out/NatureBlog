@@ -3,7 +3,7 @@
 
 
 {% block content %}
-    <div class="col-xxl-6 col-xl-8 col-12 mx-auto mt-3">
+    <div class="col-xxl-6 col-xl-8 col-12 mx-auto mt-sm-3">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title py-2">{{ user.username }}</h5>
@@ -13,9 +13,9 @@
                             + Add post
                         </span>
                     </a>
-                    <a href="{% url "blog:userposts" %}" class="list-group-item list-group-item-action">My posts</a>
-                    <a href="{% url "blog:userlikes" %}" class="list-group-item list-group-item-action">Favourite posts</a>
-                    <a href="{% url "blog:usercomments" %}" class="list-group-item list-group-item-action">My comments</a>
+                    <a href="{% url "blog:userposts" %}" class="list-group-item list-group-item-action">My posts<i class="fa-regular fa-clipboard ps-2"></i></a>
+                    <a href="{% url "blog:userlikes" %}" class="list-group-item list-group-item-action">Favourite posts<i class="fa-regular fa-heart fa-lg ps-2"></i></a>
+                    <a href="{% url "blog:usercomments" %}" class="list-group-item list-group-item-action">My comments<i class="fa-regular fa-pen-to-square ps-2"></i></a>
                 </div>
                 <div class="card-footer mt-3">
                     <p>Info:</p>
@@ -23,10 +23,11 @@
                         {% csrf_token %}
                         {% for field in form %}
                         <div class="my-4">
-                        {{ field.errors }}
+                        <span class="red-string">{{ field.errors }}</span>
                         {{ field.label_tag }} {{ field }}
                         </div>
                         {% endfor %}
+                        <div class="fw-bold red-string">{{ form.non_field_errors }}</div>
                         <button type="submit" class="btn btn-primary mt-3">Save changes</button>
                     </form>
                 </div>

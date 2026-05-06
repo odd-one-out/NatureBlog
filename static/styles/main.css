@@ -67,6 +67,11 @@ img {
 
 }
 
+/* class for form errors */
+.red-string {
+    color: red;
+}
+
 
 @media(max-width: 1200px) {
     .wrapper {
