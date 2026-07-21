@@ -12,10 +12,12 @@ from django.shortcuts import redirect, get_object_or_404
 from django.http import HttpResponseForbidden, Http404
 from django.urls import reverse_lazy
 from django.db.models import Count, Max
+from django.core.mail import send_mail
 
 from blog.models import Category, Post, Comment
 from blog.forms import PostForm, CommentForm
 from blog.utils import search_post
+from django.conf import settings
 
 # rest framework
 from rest_framework import generics, viewsets
@@ -179,6 +181,15 @@ class CreatePostView(LoginRequiredMixin, FormView):
         post.author = self.request.user
         post.save()
         messages.success(self.request, 'Your post is created successfully. It\'s on moderation now.')
+        if post.author.email:
+            message = f'Hello, {post.author.username}, thanks for creating a post \'{post.title}\'. It\'s on moderation now'
+            from_email = settings.EMAIL_HOST_USER
+            to_email = post.author.email
+            send_mail('New post created',
+            message,
+            from_email,
+            [to_email],
+            fail_silently=False,)
         return redirect(self.success_url)
     
 
