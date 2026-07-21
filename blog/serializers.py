@@ -1,4 +1,5 @@
 from rest_framework import serializers
+# serializer converts db model objects/query sets into a simple python list or dictionary, than to json format
 
 from blog.models import Category, Post, Comment
 from django.contrib.auth import get_user_model
