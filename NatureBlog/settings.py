@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('BLOG_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(' ')
 
 
 # Application definition
@@ -72,6 +72,9 @@ if not TESTING:
         "debug_toolbar.middleware.DebugToolbarMiddleware",
         *MIDDLEWARE,
     ]
+    DEBUG_TOOLBAR_CONFIG = {
+        "SHOW_TOOLBAR_CALLBACK": "debug_toolbar.middleware.show_toolbar_with_docker",
+    }
 
 
 ROOT_URLCONF = 'NatureBlog.urls'
@@ -104,8 +107,8 @@ DATABASES = {
         'NAME': os.getenv('BLOG_DB_NAME'),
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
@@ -162,9 +165,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 INTERNAL_IPS = [
-    # ...
     "127.0.0.1",
-    # ...
+    "172.18.0.1",
 ]
 
 # email backend is used for changing user's password (send a link to set a new one)

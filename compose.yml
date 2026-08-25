@@ -1,0 +1,46 @@
+services:
+  nb-site:
+    #build: .
+    image: nature-image
+    container_name: nature-site
+    restart: unless-stopped
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - .env
+    networks:
+      - nature-net
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"    
+    depends_on:
+      db:
+        condition: service_healthy
+    
+  db:
+    image: postgres:16.14-alpine
+    container_name: psgr-nature
+    restart: unless-stopped
+    ports:
+      - "5433:5432" 
+    volumes:
+      - nature-vol:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${BLOG_DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${BLOG_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nature-net
+
+networks:
+  nature-net:
+    driver: bridge
+
+volumes:
+  nature-vol:
+    
