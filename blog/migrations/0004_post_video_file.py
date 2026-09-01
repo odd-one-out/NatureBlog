@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='post',
             name='video_file',
-            field=models.FileField(blank=True, null=True, upload_to='post_videos', validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['MOV', 'avi', 'mp4', 'webm', 'mkv']), blog.models.file_size], verbose_name='video'),
+            field=models.FileField(blank=True, null=True, upload_to='post_videos', validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['MOV', 'avi', 'mp4', 'webm', 'mkv']), blog.models.video_file_size], verbose_name='video'),
         ),
     ]

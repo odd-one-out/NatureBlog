@@ -10,12 +10,18 @@ def get_sentinel_user():
     return User.objects.get_or_create(username="deleted")[0]
 
 
-# ensure file size is within the limit(20mb)
-# this function is used as a validator for a video file field of a Post model
-def file_size(value): 
+# ensure file size is within the limit
+# these functions are used as validators for video and image fields of a Post model
+def video_file_size(value): 
     limit = 20 * 1024 * 1024 # 20mb
     if value.size > limit:
         raise ValidationError('File is too big. File size should not be more than 20Mb')
+
+def image_file_size(value): 
+    limit = 5 * 1024 * 1024 # 5mb
+    if value.size > limit:
+        raise ValidationError('File is too big. File size should not be more than 5Mb')
+
 
 
 User = get_user_model()
@@ -52,11 +58,11 @@ class Post(models.Model):
     title = models.CharField(max_length=30, unique=True)
     slug = models.SlugField(max_length=35, unique=True, blank=True, null=True)
     description = models.TextField(max_length=500, blank=True, null=True)
-    image1 = models.ImageField(upload_to='post_images', blank=True, null=True)
-    image2 = models.ImageField(upload_to='post_images', blank=True, null=True)
-    image3 = models.ImageField(upload_to='post_images', blank=True, null=True)
+    image1 = models.ImageField(upload_to='post_images', blank=True, null=True, validators=[image_file_size])
+    image2 = models.ImageField(upload_to='post_images', blank=True, null=True, validators=[image_file_size])
+    image3 = models.ImageField(upload_to='post_images', blank=True, null=True, validators=[image_file_size])
     video_file = models.FileField(upload_to='post_videos', blank=True, null=True,
-        validators=[FileExtensionValidator(allowed_extensions=['MOV', 'avi', 'mp4', 'webm', 'mkv']), file_size], verbose_name='video')
+        validators=[FileExtensionValidator(allowed_extensions=['MOV', 'avi', 'mp4', 'webm', 'mkv']), video_file_size], verbose_name='video')
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=STATUS, default='Checking')
     likes = models.ManyToManyField(User, related_name='user_likes', blank=True)

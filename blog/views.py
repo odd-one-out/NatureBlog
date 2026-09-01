@@ -106,7 +106,7 @@ class PostListView(ListView):
         slug = self.kwargs.get('cat_slug')
         context['cat_slug'] = slug
         if slug:
-            context['category'] = get_object_or_404(Category, slug=slug)
+            context['category'] = get_object_or_404(Category.objects.only('name', 'description'), slug=slug)
         return context
     
 
