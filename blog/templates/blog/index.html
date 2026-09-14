@@ -23,29 +23,16 @@
             <div class="carousel-inner">
                 {% cache 120 cache_posts %}
                 {% for p in posts %}
-                <div class="carousel-item active">
-                    {% if p.image1 %}
-                    <a href="{% url "blog:post" p.slug %}">
-                        <img src="{{ p.image1.url }}" class="d-block w-100" alt="{{ p.title }}">
-                    </a>
-                    {% elif p.image2 %}
-                    <a href="{% url "blog:post" p.slug %}" class="h-100">
-                        <img src="{{ p.image2.url }}" class="d-block w-100" alt="{{ p.title }}">
-                    </a>
-                    {% elif p.image3 %}
-                    <a href="{% url "blog:post" p.slug %}" class="h-100">
-                        <img src="{{ p.image3.url }}" class="d-block w-100" alt="{{ p.title }}">
-                    </a>
-                    {% else %}
-                    <a href="{% url "blog:post" p.slug %}" class="h-100">
-                        <img src="{% static "images/no_image.jpg" %}" class="d-block w-100">
-                    </a>
-                    {% endif %}
-                    <div class="carousel-caption d-none d-md-block">
-                        <h5>{{ p.title }}</h5>
-                        <p>{{ p.description|truncatechars:50 }}</p>
+                    <div class="carousel-item active">                      
+                        <a href="{% url "blog:post" p.slug %}">
+                            <img src="{% if p.img %}{{ p.img.0.image.url }}{% else %}{% static "images/no_image.jpg" %}{% endif %}"
+                            class="d-block w-100" alt="{{ p.title }}">
+                        </a>
+                        <div class="carousel-caption d-none d-md-block">
+                            <h5>{{ p.title }}</h5>
+                            <p>{{ p.description|truncatechars:50 }}</p>
+                        </div>
                     </div>
-                </div>
                 {% endfor %}
                 {% endcache %}
             </div>
@@ -75,12 +62,9 @@
             {% for c in categories %}
             <div class="col-lg-4 col-md-4 col-12 my-2">
                 <div class="card">
-                    <a href="{% url "blog:posts" c.slug %}">
-                        {% if c.image %}
-                        <img src="{{c.image.url}}" class="card-img-top" alt="{{c.name}}">
-                        {% else %}
-                        <img src="{% static "images/no_image.jpg" %}" class="card-img-top" alt="{{c.name}}">
-                        {% endif %}
+                    <a href="{% url "blog:posts" c.slug %}">     
+                        <img src="{% if c.image %}{{c.image.url}}{% else %}{% static "images/no_image.jpg" %}{% endif %}" 
+                        class="card-img-top" alt="{{c.name}}">                    
                     </a>
                     <div class="card-body">
                         <h5 class="card-title">{{c.name}}</h5>

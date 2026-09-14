@@ -4,27 +4,28 @@
 
 
 <div class="col-sm-6 col-lg-4 col-md-6 col-12 my-2">
-    {% if post.status == 'Published' %}
     <div class="card">
-        {% if post.image1 %}
-        <a href="{% url "blog:post" post.slug %}">
-            <img src="{{ post.image1.url }}" class="card-img-top" alt="{{ post.title }}">
-        </a>
-        {% elif post.image2 %}
-        <a href="{% url "blog:post" post.slug %}">
-            <img src="{{ post.image2.url }}" class="card-img-top" alt="{{ post.title }}">
-        </a>
-        {% elif post.image3 %}
-        <a href="{% url "blog:post" post.slug %}">
-            <img src="{{ post.image3.url }}" class="card-img-top" alt="{{ post.title }}">
-        </a>
+        {% if post.img and post.status == 'Published' %}
+            <a href="{% url "blog:post" post.slug %}">
+                <img src="{{ post.img.0.image.url }}" class="card-img-top" alt="{{ post.title }}">
+            </a>
         {% else %}
             <img src="{% static "images/no_image.jpg" %}" class="card-img-top">
         {% endif %}
         <div class="card-body">
-            <h5 class="card-title">{{ post.title }}</h5>
+            <h5 class="card-title">
+                {% if post.status == 'Published' %}{{ post.title }}
+                {% else %}Post {{ post.id }} by {{ post.author }}
+                {% endif %}
+            </h5>
             <p><small>{{ post.date|date:'F, j - Y' }}</small></p>
-            <p class="card-text">{{ post.description|truncatechars:40 }}</p>
+            <p class="card-text">
+                {% if post.status == 'Published' %}
+                    {{ post.description|truncatechars:40 }}
+                {% else %}
+                    this post is on moderation now.
+                {% endif %}
+            </p>
             <div class="like-comment">
                 <i class="fa-regular fa-heart"></i>
                 <p class="me-4"> {{ post.likes_count }}</p>
@@ -35,14 +36,4 @@
             <a href="{% url "blog:post" post.slug %}" class="btn btn-primary">view post</a>
         </div>
     </div>
-    {% else %}
-    <div class="card">
-        <img src="{% static "images/no_image.jpg" %}" class="card-img-top">
-        <div class="card-body">
-            <h5 class="card-title">Post {{ post.id }} by {{ post.author }}</h5>
-            <p class="card-text">this post is on moderation now. It will appear here very soon)</p>
-            <a href="{% url "blog:post" post.slug %}" class="btn btn-primary">view post</a>
-        </div>
-    </div>
-    {% endif %}
 </div>

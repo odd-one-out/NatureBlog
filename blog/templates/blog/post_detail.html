@@ -11,20 +11,14 @@
         {% comment %} container for pictures {% endcomment %}
         <div class="container mb-2">
             <div class="row">
-                {% if post.image1 %}
-                <div class="col-md-4 col-sm-6 col-12 picture">
-                    <img src="{{ post.image1.url }}" class="w-100 h-100" alt="{{ post.title }}" onclick="FullScreen(this.src);">
-                </div>
-                {% endif %}
-                {% if post.image2 %}
-                <div class="col-md-4 col-sm-6 col-12 picture px-md-0">
-                    <img src="{{ post.image2.url }}" class="w-100 h-100" alt="{{ post.title }}" onclick="FullScreen(this.src);">
-                </div>
-                {% endif %}
-                {% if post.image3 %}
-                <div class="col-md-4 col-sm-12 col-12 picture">
-                    <img src="{{ post.image3.url }}" class="w-100 h-100" alt="{{ post.title }}" onclick="FullScreen(this.src);">
-                </div>
+                {% if post.postimage_set.exists %}
+                    {% for img in post.postimage_set.all %}
+                        <div class="col-md-4 col-sm-6 col-12 picture">
+                            <img src="{{ img.image.url }}" class="w-100 h-100" alt="{{ post.title }}" onclick="FullScreen(this.src);">
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <img src="{% static "images/no_image.jpg" %}" class="card-img-top">
                 {% endif %}
             </div>
         </div>

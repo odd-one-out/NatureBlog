@@ -1,0 +1,21 @@
+.file-preview {
+    font-weight: 500;
+    font-size:smaller;
+}
+
+.file-preview a {
+    display: block;
+    padding-bottom: 0.5rem;
+}
+
+.file-preview input[type="checkbox"][id$="-clear_id"] + label {
+    color: #dc3545;
+}
+
+.img-preview {
+    max-width: 70px;
+    max-height: 70px;
+    object-fit: cover;
+    display: block;
+    padding-top: 0.25rem;
+}

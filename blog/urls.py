@@ -17,8 +17,8 @@ urlpatterns = [
     path('search/', views.PostListView.as_view(), name='search'),
 
     # paths for logged in users
-    path('create/', views.CreatePostView.as_view(), name='create'),
-    path('edit/<int:pk>/', views.EditPostView.as_view(), name='editpost'),
+    path('create/', views.create_post, name='create'),
+    path('edit/<int:pk>/', views.edit_post, name='editpost'),
     path('delete/<int:pk>/', views.DeletePostView.as_view(), name='deletepost'),
     path('user-posts/', views.UserPostsandLikesView.as_view(), name='userposts'),
     path('user-likes/', views.UserPostsandLikesView.as_view(), name='userlikes'),

@@ -15,12 +15,12 @@ def get_sentinel_user():
 def video_file_size(value): 
     limit = 20 * 1024 * 1024 # 20mb
     if value.size > limit:
-        raise ValidationError('File is too big. File size should not be more than 20Mb')
+        raise ValidationError('Video file is too big. File size should not be more than 20Mb')
 
 def image_file_size(value): 
     limit = 5 * 1024 * 1024 # 5mb
     if value.size > limit:
-        raise ValidationError('File is too big. File size should not be more than 5Mb')
+        raise ValidationError('Image is too big. File size should not be more than 5Mb')
 
 
 
@@ -58,9 +58,6 @@ class Post(models.Model):
     title = models.CharField(max_length=30, unique=True)
     slug = models.SlugField(max_length=35, unique=True, blank=True, null=True)
     description = models.TextField(max_length=500, blank=True, null=True)
-    image1 = models.ImageField(upload_to='post_images', blank=True, null=True, validators=[image_file_size])
-    image2 = models.ImageField(upload_to='post_images', blank=True, null=True, validators=[image_file_size])
-    image3 = models.ImageField(upload_to='post_images', blank=True, null=True, validators=[image_file_size])
     video_file = models.FileField(upload_to='post_videos', blank=True, null=True,
         validators=[FileExtensionValidator(allowed_extensions=['MOV', 'avi', 'mp4', 'webm', 'mkv']), video_file_size], verbose_name='video')
     date = models.DateTimeField(auto_now_add=True)
@@ -79,6 +76,14 @@ class Post(models.Model):
         if not self.slug:  # Only generate if slug is not already set
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
+
+class PostImage(models.Model):
+    """Image to post"""
+    image = models.ImageField(upload_to='post_images', blank=True, null=True, validators=[image_file_size])
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Comment(models.Model):

@@ -1,23 +1,25 @@
-from django.forms import ValidationError
+from django.forms import inlineformset_factory
 from django.utils.decorators import method_decorator
 from django.views.generic.base import TemplateView
-from django.views.generic import DetailView, UpdateView, ListView
-from django.views.generic.edit import FormView, DeleteView
+from django.views.generic import DetailView, ListView
+from django.views.generic.edit import DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.http import HttpResponseForbidden, Http404
 from django.urls import reverse_lazy
-from django.db.models import Count, Max
+from django.db.models import Count, Prefetch
+from django.db import transaction, DatabaseError
 from django.core.mail import send_mail
 
-from blog.models import Category, Post, Comment
+from django.conf import settings
+from blog.models import Category, Post,PostImage, Comment
 from blog.forms import PostForm, CommentForm
 from blog.utils import search_post
-from django.conf import settings
+
 
 # rest framework
 from rest_framework import generics, viewsets
@@ -38,7 +40,10 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Nature Blog - Main'
         context['categories'] = Category.objects.all()
-        context['posts'] = Post.objects.filter(status='Published')[:3]
+        context['posts'] = Post.objects.filter(status='Published').prefetch_related(Prefetch(
+                                            'postimage_set',
+                                            queryset=PostImage.objects.order_by('id')[:1],
+                                            to_attr='img'))[:3]
         return context
     
 
@@ -62,7 +67,13 @@ class PostListView(ListView):
 
     # depending on filter and category this func returns different querysets of posts
     def get_queryset(self):
-        posts = Post.objects.annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+
+        posts = Post.objects.annotate(likes_count=Count('likes')).select_related('author').prefetch_related(
+                    'comment_set', Prefetch(
+                                            'postimage_set',
+                                            queryset=PostImage.objects.order_by('id')[:1],
+                                            to_attr='img')    # here I get a list with 0 or 1 obj, that's why in template I get obj by id - 0
+                    )
 
         cat_slug = self.kwargs.get('cat_slug')
         search = self.request.GET.get('q', None)
@@ -117,7 +128,7 @@ class PostView(DetailView):
     context_object_name = 'post'
 
     def get_queryset(self):
-        return Post.objects.select_related('author')
+        return Post.objects.select_related('author').prefetch_related('postimage_set')
 
     # this func is used to submit comment or like depending on a POST request param,
     # available only for logged in users
@@ -136,8 +147,6 @@ class PostView(DetailView):
                 try:
                     Comment.objects.create(text=text, user=request.user, post=post)
                     messages.success(request, 'Your comment is added)')
-                except ValidationError:
-                    messages.error(request, 'unable to create comment - validation error')
                 except (TypeError, ValueError):
                     messages.error(request, 'unable to create comment - wrong data')
             else:
@@ -165,58 +174,174 @@ class PostView(DetailView):
 
  #USER POSTs VIEWS    
 
-class CreatePostView(LoginRequiredMixin, FormView):
+# class CreatePostView(LoginRequiredMixin, FormView):
 
-    template_name = "blog/create_post.html"
-    form_class = PostForm
-    success_url = reverse_lazy('user:profile')
-    extra_context = {
+#     template_name = "blog/create_post.html"
+#     form_class = PostForm
+#     success_url = reverse_lazy('user:profile')
+#     extra_context = {
+#         'title': 'Nature Blog - create post',
+#         'page_title': 'Post creation',
+#         'btn_name': 'Create post' # this is needed because the same template is also used for editing post
+#     }
+
+#     def form_valid(self, form):
+#         post = form.save(commit=False)
+#         post.author = self.request.user
+#         post.save()
+#         messages.success(self.request, 'Your post is created successfully. It\'s on moderation now.')
+#         if post.author.email:
+#             message = f'Hello, {post.author.username}, thanks for creating a post \'{post.title}\'. It\'s on moderation now'
+#             from_email = settings.EMAIL_HOST_USER
+#             to_email = post.author.email
+#             send_mail('New post created',
+#             message,
+#             from_email,
+#             [to_email],
+#             fail_silently=False,)
+#         return redirect(self.success_url)
+
+@login_required
+def create_post(request):
+
+    ImageFormSet = inlineformset_factory(Post,
+                                        PostImage,
+                                        fields=['image'],
+                                        extra=3,
+                                        can_delete=False)
+    #'extra' means the number of photos that you can upload
+
+    if request.method == 'POST':
+    
+        form = PostForm(request.POST, request.FILES)
+        formset = ImageFormSet(request.POST, request.FILES, instance=Post())
+        
+        if form.is_valid() and formset.is_valid():
+            try: 
+                with transaction.atomic():
+                    post = form.save(commit=False)
+                    post.author = request.user
+                    post.save()
+
+                    formset.instance = post
+                    formset.save()
+
+                    messages.success(request, 'Your post is created successfully. It\'s on moderation now.')
+                    if post.author.email:
+                        message = f'Hello, {post.author.username}, thanks for creating a post \'{post.title}\'. It\'s on moderation now'
+                        from_email = settings.EMAIL_HOST_USER
+                        to_email = post.author.email
+                        send_mail('New post created',
+                        message,
+                        from_email,
+                        [to_email],
+                        fail_silently=False,)
+
+                    return redirect('blog:userposts')
+                
+            except DatabaseError as e:    
+                messages.warning(request, "database error occured, please, try again")
+            except Exception as e:
+                messages.warning(request, "An unexpected error occurred while saving")
+
+        else:
+            print(form.errors, formset.errors)
+    else:
+        form = PostForm()
+        formset = ImageFormSet(instance=Post())
+
+    context = {
+        'form': form,
+        'formset': formset,
         'title': 'Nature Blog - create post',
         'page_title': 'Post creation',
         'btn_name': 'Create post' # this is needed because the same template is also used for editing post
     }
 
-    def form_valid(self, form):
-        post = form.save(commit=False)
-        post.author = self.request.user
-        post.save()
-        messages.success(self.request, 'Your post is created successfully. It\'s on moderation now.')
-        if post.author.email:
-            message = f'Hello, {post.author.username}, thanks for creating a post \'{post.title}\'. It\'s on moderation now'
-            from_email = settings.EMAIL_HOST_USER
-            to_email = post.author.email
-            send_mail('New post created',
-            message,
-            from_email,
-            [to_email],
-            fail_silently=False,)
-        return redirect(self.success_url)
-    
+    return render(request, 'blog/create_post.html', context)
 
-class EditPostView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
-    model = Post
-    form_class = PostForm
-    template_name = "blog/create_post.html"
-    success_url = reverse_lazy('user:profile')
-    extra_context = {
+
+
+# class EditPostView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+
+#     model = Post
+#     form_class = PostForm
+#     template_name = "blog/create_post.html"
+#     success_url = reverse_lazy('user:profile')
+#     extra_context = {
+#         'title': 'Nature Blog - edit post',
+#         'page_title': 'Post editing',
+#         'btn_name': 'Edit post' # this is needed because the same template is also used for creating post
+#     }
+
+#     def test_func(self):
+#         # Get the object the user is trying to access
+#         post = self.get_object()
+#         # Return True if the current user is the object's author, False otherwise
+#         return post.author == self.request.user
+
+#     def form_valid(self, form):
+#         post = form.save(commit=False)     
+#         post.status = Post.STATUS[0][0]
+#         post.save()
+#         messages.success(self.request, 'your post was edited successfully. It\'s on moderation now.')
+#         return redirect(self.success_url)
+
+
+def get_images_quantity(obj, max_imgs):
+    if obj.postimage_set.exists():
+        return max_imgs - obj.postimage_set.count()
+    return max_imgs
+
+@login_required
+def edit_post(request, pk):
+
+    post = get_object_or_404(Post, pk=pk)
+    if not post.author == request.user:
+        return HttpResponseForbidden('You have no rights to edit this post')
+
+    ImageFormSet = inlineformset_factory(Post,
+                                          PostImage,
+                                          fields=['image'],
+                                          extra=get_images_quantity(post, 3),
+                                          can_delete=False)
+    #'extra' means the number of photos that you can upload
+
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES, instance=post)
+        formset = ImageFormSet(request.POST, request.FILES, instance=post)
+        
+        if form.is_valid() and formset.is_valid():
+            try: 
+                with transaction.atomic():
+                    p = form.save(commit=False)
+                    p.status = Post.STATUS[0][0]
+                    p.save()
+                    formset.save()            
+                    messages.success(request, 'Your post is edited successfully. It\'s on moderation now.')
+                    return redirect('blog:userposts')
+                
+            except DatabaseError as e:    
+                messages.warning(request, "database error occured, please, try again")
+            except Exception as e:
+                messages.warning(request, "An unexpected error occurred while saving")
+
+        else:
+            print(form.errors, formset.errors)
+    else:
+        form = PostForm(instance=post)
+        formset = ImageFormSet(instance=post)
+
+    context = {
+        'form': form,
+        'formset': formset,
         'title': 'Nature Blog - edit post',
         'page_title': 'Post editing',
-        'btn_name': 'Edit post' # this is needed because the same template is also used for creating post
+        'btn_name': 'Edit post' # this is needed because the same template is also used for editing post
     }
 
-    def test_func(self):
-        # Get the object the user is trying to access
-        post = self.get_object()
-        # Return True if the current user is the object's author, False otherwise
-        return post.author == self.request.user
-
-    def form_valid(self, form):
-        post = form.save(commit=False)     
-        post.status = Post.STATUS[0][0]
-        post.save()
-        messages.success(self.request, 'your post was edited successfully. It\'s on moderation now.')
-        return redirect(self.success_url)
+    return render(request, 'blog/create_post.html', context)
     
 
 class DeletePostView(LoginRequiredMixin, UserPassesTestMixin, SuccessMessageMixin, DeleteView):
@@ -259,7 +384,12 @@ class UserPostsandLikesView(LoginRequiredMixin, ListView):
 
     # depending on request's path this func returns different querysets of posts: user's posts or posts that user liked
     def get_queryset(self):
-        posts = Post.objects.annotate(likes_count=Count('likes')).select_related('author').prefetch_related('comment_set')
+        posts = Post.objects.annotate(likes_count=Count('likes')).select_related('author').prefetch_related(
+            'comment_set', Prefetch(
+                                    'postimage_set',
+                                    queryset=PostImage.objects.order_by('id')[:1],
+                                    to_attr='img')
+            )
         if '/user-posts/' in self.request.path:
             posts = posts.filter(author=self.request.user)
         elif '/user-likes/' in self.request.path:
@@ -279,22 +409,6 @@ class UserPostsandLikesView(LoginRequiredMixin, ListView):
         return context
     
 
-# class UserLikesView(LoginRequiredMixin, ListView):
-
-#     template_name = 'blog/user_posts_and_likes.html'
-#     context_object_name = 'posts'
-
-#     def get_queryset(self):
-#         return Post.objects.annotate(likes_count=Count('likes')).filter(likes__id=self.request.user.id).select_related('author').prefetch_related('comment_set')
-    
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         context['title'] =  'Nature Blog - my favourites'
-#         context['empty_text'] = 'You haven\'t got favourite posts yet :('
-#         context['name'] = 'Favourite posts'
-#         return context
-
-
 class UserCommentsView(LoginRequiredMixin, ListView):
 
     template_name = 'blog/user_comments.html'
@@ -310,7 +424,8 @@ class UserCommentsView(LoginRequiredMixin, ListView):
     #     return context
 
 
-# rest framework
+
+# REST fRAMEWORK
 class PostAPIViewset(viewsets.ModelViewSet):
 
     queryset = Post.objects.all().select_related('category', 'author').prefetch_related('comment_set').annotate(post_likes=Count('likes'))

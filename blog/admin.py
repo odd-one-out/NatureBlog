@@ -1,6 +1,12 @@
 from django.contrib import admin
-from blog.models import Category, Post, Comment
+from blog.models import Category, Post, PostImage, Comment
 # Register your models here.
+
+
+# this class is used for showing images in post admin
+class ImagesTabInline(admin.TabularInline):
+    model = PostImage
+    extra = 0
 
 
 # this class is used for showing comments in post admin
@@ -43,7 +49,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    fields = ['title', 'slug', 'description', 'date', 'author', 'category', 'display_likes', 'status', ('image1', 'image2', 'image3'), 'video_file']
+    fields = ['title', 'slug', 'description', 'date', 'author', 'category', 'display_likes', 'status', 'video_file']
     readonly_fields = ['display_likes', 'date', 'author']
     list_display = ['id', 'title', 'status', 'category', 'author', 'date']
     list_editable = ['status']
@@ -51,7 +57,7 @@ class PostAdmin(admin.ModelAdmin):
     list_filter = ['status', 'category', 'author']
     search_fields = ['title', 'description']
     actions = ['set_published'] # this adds my custom func to admin dropdown menu
-    inlines = [CommentTabInline]
+    inlines = [ImagesTabInline, CommentTabInline]
 
     def display_likes(self, obj):
         """Create a comma-separated string of authors for the readonly field."""
