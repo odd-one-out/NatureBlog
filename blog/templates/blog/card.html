@@ -7,7 +7,7 @@
     <div class="card">
         {% if post.img and post.status == 'Published' %}
             <a href="{% url "blog:post" post.slug %}">
-                <img src="{{ post.img.0.image.url }}" class="card-img-top" alt="{{ post.title }}">
+                <img src="{{ post.img.0.image_url }}" class="card-img-top" alt="{{ post.title }}">
             </a>
         {% else %}
             <img src="{% static "images/no_image.jpg" %}" class="card-img-top">

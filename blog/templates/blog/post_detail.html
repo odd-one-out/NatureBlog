@@ -14,7 +14,7 @@
                 {% if post.postimage_set.exists %}
                     {% for img in post.postimage_set.all %}
                         <div class="col-md-4 col-sm-6 col-12 picture">
-                            <img src="{{ img.image.url }}" class="w-100 h-100" alt="{{ post.title }}" onclick="FullScreen(this.src);">
+                            <img src="{{ img.image_url }}" class="w-100 h-100" alt="{{ post.title }}" onclick="FullScreen(this.src);">
                         </div>
                     {% endfor %}
                 {% else %}
@@ -46,6 +46,7 @@
             <div class="card-body">
                 <p class="mb-0 fw-medium">{{ post.date|date:'F j, Y' }}</p>
                 <p class="fs-5 mb-2">{{ post.description }}</p>
+                <p class="fst-italic">posted by {{ post.author }}</p>
                 <div class="d-flex justify-content-between border-bottom border-success-subtle"> 
                      <div class="d-flex align-items-center">                   
                     
@@ -70,6 +71,7 @@
 
                 {% comment %} comment form {% endcomment %}
                 <form action="{% url 'blog:post' post.slug %}" method="post">
+                    {% csrf_token %}
                     <div class="d-flex flex-row mt-4">
                         {% csrf_token %}
                         {{ comment_form.text }}

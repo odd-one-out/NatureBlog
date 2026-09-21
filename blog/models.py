@@ -82,6 +82,12 @@ class PostImage(models.Model):
     image = models.ImageField(upload_to='post_images', blank=True, null=True, validators=[image_file_size])
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
+
+    def image_url(self):
+        if self.image and hasattr(self.image, 'url'):
+            return self.image.url
+        return "/static/images/no_image.png"
+
     def __str__(self):
         return str(self.id)
 
