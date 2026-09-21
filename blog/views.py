@@ -114,6 +114,7 @@ class PostListView(ListView):
         context['title'] = 'Nature Blog - posts'
         context['page_title'] = self.page_title
         context['empty_text'] = 'Sorry, no posts found'
+        context['categories'] = Category.objects.only('slug', 'name')
         slug = self.kwargs.get('cat_slug')
         context['cat_slug'] = slug
         if slug:

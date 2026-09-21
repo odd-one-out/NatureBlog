@@ -56,15 +56,15 @@ img {
 
 /* class only for user login/register/change_password pages */
 .regform {
+    display: inline-block;
+    margin-inline: auto;
     background-color: #f8f9fa;
     border-radius: 15px;
     box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.5);
-    padding: 2rem;
+    padding: 1rem;
     margin-top: 2rem;
     margin-bottom: 2rem;
     width: 96%;
-    /* max-width: 800px; */
-
 }
 
 /* class for form errors */
@@ -86,7 +86,7 @@ img {
 
     .regform {
         margin-top: 1rem;
-        padding: 1.5rem;
+        box-shadow: none;
     }
 
     .footer {
@@ -97,7 +97,7 @@ img {
 
 @media(max-width: 576px) {
     .regform {
-    margin-top: .5rem;
+        margin-top: .5rem;
     }
 }
 

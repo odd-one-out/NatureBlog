@@ -3,54 +3,37 @@
 
 
 {% block content %}
+    
+        
     <div class="col-12">
+        <div class="d-flex flex-row-reverse">
+            <a href="{% url "blog:create" %}" class="btn btn-outline-primary">+ add post</a>
+        </div>
         {% if category %}
-        <h4 class="text-center">{{ category.name }} - {{ posts|length }} {% if posts|length == 1 %}post{% else %}posts{% endif %}</h4>
-        <p class="text-center mb-md-0">{{ category.description }}</p>
+        <h4 class="text-center mb-1">{{ category.name }}</h4>
+        <p class="text-center">{{ category.description }}</p>
         {% else %}
-        <h4 class="text-center">{{ page_title }} - {{ posts|length }} {% if posts|length == 1 %}post{% else %}posts{% endif %}</h4>
-        {% endif %}
+        <h4 class="text-center">{{ page_title }}</h4>
+        {% endif %}       
+        <p class="fst-italic">{{ posts|length }} {% if posts|length == 1 %}post{% else %}posts{% endif %}</p>
+
 
         
-        {% if posts %}
-        <div class="d-flex justify-content-between">
-            <div>
+        {% if posts %}    
+            <div class="btn-toolbar">
                 <div class="btn-group">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        sort by
+                    <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        category
                     </button>
-                    <ul class="dropdown-menu">
-                        <form action="{% if request.GET.q %}{% url "blog:search" %}
-                            {% elif cat_slug %}{% url "blog:posts" cat_slug %}
-                            {% else %}{% url "blog:allposts" %}
-                            {% endif %}" method="get">
-                            {% if request.GET.q %}
-                            <input type="hidden" name="q" value="{{ request.GET.q }}">
-                            {% endif %}
-                            {% if request.GET.time_period %}
-                            <input type="hidden" name="time_period" value="{{ request.GET.time_period }}">
-                            {% endif %}
-                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="order_by"
-                                id="flexRadioDefault1" value="date" {% if request.GET.order_by == 'date' %}checked{% endif %}>
-                                <label class="form-check-label ms-2" for="flexRadioDefault1">Oldest to Newest</label>
-                            </li>
-                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="order_by"
-                                id="flexRadioDefault2" value="-date" {% if request.GET.order_by == '-date' %}checked{% endif %}>
-                                <label class="form-check-label ms-2" for="flexRadioDefault2">Newest to Oldest</label>
-                            </li>
-                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="order_by"
-                                id="flexRadioDefault3" value="-likes_count" {% if request.GET.order_by == '-likes_count' %}checked{% endif %}>
-                                <label class="form-check-label ms-2" for="flexRadioDefault3">Likes</label>
-                            </li>    
-                            <li class="dropdown-item">
-                                <button type="submit" class="btn btn-primary">Apply</button>
-                            </li>
-                        </form>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                        {% for c in categories %}
+                        <li><a class="dropdown-item" href="{% url "blog:posts" c.slug %}">{{ c.name }}</a></li>
+                        {% endfor %}
                     </ul>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        filters
+                    <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        date
                     </button>
                     <ul class="dropdown-menu">
                         <form action="{% if request.GET.q %}{% url "blog:search" %}
@@ -82,21 +65,52 @@
                             <li class="dropdown-item">
                                 <button type="submit" class="btn btn-primary">Apply</button>
                             </li>
-                    </form>
+                        </form>
                     </ul>
                 </div>
-            </div>
-
-    
-            <a href="{% url "blog:create" %}" class="btn btn-outline-primary">+ add post</a>       
-        </div>
+                <div class="btn-group">
+                    <button class="btn btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        sort by
+                    </button>
+                    <ul class="dropdown-menu">
+                        <form action="{% if request.GET.q %}{% url "blog:search" %}
+                            {% elif cat_slug %}{% url "blog:posts" cat_slug %}
+                            {% else %}{% url "blog:allposts" %}
+                            {% endif %}" method="get">
+                            {% if request.GET.q %}
+                            <input type="hidden" name="q" value="{{ request.GET.q }}">
+                            {% endif %}
+                            {% if request.GET.time_period %}
+                            <input type="hidden" name="time_period" value="{{ request.GET.time_period }}">
+                            {% endif %}
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="order_by"
+                                id="flexRadioDefault1" value="date" {% if request.GET.order_by == 'date' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault1">Oldest to Newest</label>
+                            </li>
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="order_by"
+                                id="flexRadioDefault2" value="-date" {% if request.GET.order_by == '-date' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault2">Newest to Oldest</label>
+                            </li>
+                            <li class="dropdown-item"><input class="form-check-input" type="radio"  name="order_by"
+                                id="flexRadioDefault3" value="-likes_count" {% if request.GET.order_by == '-likes_count' %}checked{% endif %}>
+                                <label class="form-check-label ms-2" for="flexRadioDefault3">Likes</label>
+                            </li>    
+                            <li class="dropdown-item">
+                                <button type="submit" class="btn btn-primary">Apply</button>
+                            </li>
+                        </form>
+                    </ul>
+                </div>
+                <a class="d-inline-flex align-items-center text-decoration-none ms-2" href="{% url "blog:allposts" %}"><i class="fa-solid fa-filter-circle-xmark fa-lg" style="color: grey;"></i></a>                        
+            </div>    
         {% endif %}
 
         <div class="row">
             {% for post in posts %}
                 {% include "blog/card.html" %}
             {% empty %}
-                <h4 class="text-center">{{ empty_text }}</h4>
+                <p class="text-center">{{ empty_text }}</p>
+                <a class="text-center" href="{% url "blog:allposts" %}">back to posts</a>
             {% endfor %}
         </div>
     </div>

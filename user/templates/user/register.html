@@ -3,7 +3,7 @@
 
 
 {% block content %}
-    <div class="container regform mx-auto">
+    <div class="regform">
         <h3>Registration</h3>
         <form method="post" action="{% url "user:register" %}">
             {% csrf_token %}
