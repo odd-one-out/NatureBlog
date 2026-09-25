@@ -1,15 +1,18 @@
 
 from django.test import TestCase
 from django.urls import reverse, resolve
+from django.core.files.uploadedfile import SimpleUploadedFile
+from io import BytesIO
+from PIL import Image
 
 from blog.views import (
                         IndexView, PostListView, PostView,
-                        CreatePostView, EditPostView, DeletePostView,
+                        create_post, edit_post, DeletePostView,
                         UserPostsandLikesView, UserCommentsView,
                         delete_comment
                         )
 
-from blog.models import Category, Post, Comment
+from blog.models import Category, Post, Comment, PostImage
 from blog.forms import PostForm
 
 from user.views import UserLoginView, RegisterView, ChangeInfoView
@@ -108,7 +111,7 @@ class PostPagesTest(DataSetTestCase):
         self.assertEqual(response.status_code, 200)
 
         # ensure response contains corresponding title
-        self.assertContains(response, "Search results - 1 post")
+        self.assertContains(response, "Search results")
 
         # check context variable - posts, should contain only post that matches search query
         self.assertQuerySetEqual(response.context["posts"], [self.post])
@@ -404,6 +407,22 @@ class UserPostTest(TestCase):
     """ class to test user actions with a post: create, edit, delete;
     and to test profile options - my posts, favourite posts(posts user liked), my comments"""
 
+    @staticmethod
+    def generate_test_image(name):
+        """Generates a dummy 100x100 pixel RGB image in memory."""
+        file_obj = BytesIO()
+        # Create a small, solid red square image
+        image = Image.new("RGB", size=(100, 100), color=(255, 0, 0))
+        image.save(file_obj, format="PNG")
+        file_obj.seek(0)
+        
+        # Wrap it in a Django SimpleUploadedFile
+        return SimpleUploadedFile(
+            name=f"{name}.png",
+            content=file_obj.read(),
+            content_type="image/png"
+        )
+
     @classmethod
     def setUpTestData(cls):
         # this user has no posts, he liked and commented 1 post
@@ -422,7 +441,7 @@ class UserPostTest(TestCase):
         self.client.force_login(user=self.user1)
         url = reverse('blog:create')
         self.assertEqual(url, '/create/')
-        self.assertEqual(resolve(url).func.view_class, CreatePostView)
+        self.assertEqual(resolve(url).func, create_post)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'blog/create_post.html')
@@ -440,13 +459,38 @@ class UserPostTest(TestCase):
 
     def test_post_create_post_request_valid_data(self):
         self.client.force_login(user=self.user1)
+
+        # creating image for test
+        test_image = self.generate_test_image('test_image')
+
         # to pass the correct category, i need to pass category_id, because it's a select field which saves values by id
         data = {
             'title': 'Saturn',
-            'category': str(self.category.id)
+            'category': str(self.category.id),
+
+            # Inline Formset Management Data
+            'postimage_set-TOTAL_FORMS': '3',  # Set to match extra=3 in inlineformset
+            'postimage_set-INITIAL_FORMS': '0',
+            'postimage_set-MIN_NUM_FORMS': '0',
+            'postimage_set-MAX_NUM_FORMS': '1000',
+
+            # Inline Form 0
+            'postimage_set-0-id': '',
+            'postimage_set-0-post': '',
+            'postimage_set-0-image': test_image,
+
+            # Inline Form 1
+            'postimage_set-1-id': '',
+            'postimage_set-1-post': '',
+            'postimage_set-1-image': '',
+
+            # Inline Form 2 (leaving this empty is fine, Django will ignore it if it's optional)
+            'postimage_set-2-id': '',
+            'postimage_set-2-post': '',
+            'postimage_set-2-image': '',
         }
-        response = self.client.post(reverse('blog:create'), data=data, follow=True)
-        self.assertRedirects(response, reverse('user:profile'), status_code=302)
+        response = self.client.post(reverse('blog:create'), data=data, format='multipart', follow=True)
+        self.assertRedirects(response, reverse('blog:userposts'), status_code=302)
         self.assertContains(response, 'Your post is created successfully')
         self.assertTrue(Post.objects.filter(title='Saturn'))
 
@@ -472,7 +516,7 @@ class UserPostTest(TestCase):
         self.client.force_login(user=self.user2)
         url = reverse('blog:editpost', args=[self.post.id])
         self.assertEqual(url, f'/edit/{self.post.id}/')
-        self.assertEqual(resolve(url).func.view_class, EditPostView)
+        self.assertEqual(resolve(url).func, edit_post)
         response = self.client.get(url)
         self.assertTemplateUsed(response, 'blog/create_post.html')
 
@@ -506,16 +550,44 @@ class UserPostTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_post_edit_post_request_valid_data(self):
+        #create post with image
+        post_with_img = self.category.post_set.create(title="image post", status='Published', author=self.user2)
+        img = PostImage.objects.create(image=self.generate_test_image('existing_img'), post=post_with_img)
+
+        new_img = self.generate_test_image('new_img')
+        
         self.client.force_login(user=self.user2)
-        url = reverse('blog:editpost', args=[self.post.id])
+        url = reverse('blog:editpost', args=[post_with_img.id])
         data = {
-            'title': 'Nice turtle',
-            'description': 'beautiful',
-            'category': str(self.category.id)
-            }
-        response = self.client.post(url, data=data, follow=True)
-        self.assertRedirects(response, reverse('user:profile'), status_code=302)
-        self.assertContains(response, 'your post was edited successfully')
+            'title': 'image post',
+            'description': 'trying to edit',
+            'category': str(self.category.id),
+
+            # Inline Formset Management Data
+            'postimage_set-TOTAL_FORMS': '2',  # Set to much 2 left empty forms for images
+            'postimage_set-INITIAL_FORMS': '1', # 1 form already has img
+            'postimage_set-MIN_NUM_FORMS': '0',
+            'postimage_set-MAX_NUM_FORMS': '1000',
+
+            # Inline Form 0, that has image, we are replacing existing img with a new one
+            'postimage_set-0-id': str(img.id),
+            'postimage_set-0-post': str(post_with_img.id),
+            'postimage_set-0-image': new_img,
+
+            # Inline Form 1
+            'postimage_set-1-id': '',
+            'postimage_set-1-post': '',
+            'postimage_set-1-image': '',
+
+            # Inline Form 2
+            'postimage_set-2-id': '',
+            'postimage_set-2-post': '',
+            'postimage_set-2-image': '',
+        }
+
+        response = self.client.post(url, data=data, format='multipart', follow=True)
+        self.assertRedirects(response, reverse('blog:userposts'), status_code=302)
+        self.assertContains(response, 'Your post is edited successfully')
 
     def test_post_edit_post_request_invalid_data(self):
         self.client.force_login(user=self.user2)

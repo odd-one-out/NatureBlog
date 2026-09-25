@@ -1,7 +1,8 @@
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
 
-from blog.models import Category, Post, Comment
+from blog.models import Category, Post, PostImage, Comment
 
 User = get_user_model()
 
@@ -67,7 +68,7 @@ class CategoryTest(TestCase, TestMaxlenghtMixin):
         self.assertEqual(Category._meta.verbose_name_plural, 'Categories')
 
 
-class PostTest(TestCase, TestMaxlenghtMixin):
+class PostandImageTest(TestCase, TestMaxlenghtMixin):
 
     @classmethod
     def setUpTestData(cls):
@@ -124,8 +125,8 @@ class PostTest(TestCase, TestMaxlenghtMixin):
 
     def test_post_fields(self):
 
-        real_img_folder_name = self.post._meta.get_field('image1').upload_to
-        self.assertEqual(real_img_folder_name, 'post_images')
+        real_video_folder_name = self.post._meta.get_field('video_file').upload_to
+        self.assertEqual(real_video_folder_name, 'post_videos')
 
         real_status_default = self.post._meta.get_field('status').default
         self.assertEqual(real_status_default, 'Checking')
@@ -136,6 +137,16 @@ class PostTest(TestCase, TestMaxlenghtMixin):
     def test_post_meta(self):
         self.assertEqual(Post._meta.ordering, ['-date'])
 
+    def test_postimage_fields_and_methods(self):
+            small_gif = b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x00\x00\x00\x21...'
+            new_avatar = SimpleUploadedFile("new_image.gif", small_gif, content_type="image/gif")
+            postimage = PostImage.objects.create(image=new_avatar, post=self.post)
+
+            real_image_folder_name = postimage._meta.get_field('image').upload_to
+            self.assertEqual(real_image_folder_name, 'post_images')
+
+            self.assertEqual(str(postimage), str(postimage.id))
+            print(postimage.image_url())
 
 class CommentTest(TestCase, TestMaxlenghtMixin):
 
