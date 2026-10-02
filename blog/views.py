@@ -22,12 +22,12 @@ from blog.utils import search_post
 
 
 # rest framework
-from rest_framework import generics, viewsets
+from rest_framework import generics, mixins, viewsets
 from rest_framework.views import APIView 
-from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
-from blog.serializers import PostSerializer, BlogInfoSerializer, CommentSerializer, UserSerializer
+from blog.serializers import PostSerializer, BlogInfoSerializer, CommentSerializer, PostCreateChangeSerializer, UserSerializer
 from blog.permissions import IsAuthorOrReadOnly
 
 
@@ -426,45 +426,77 @@ class UserCommentsView(LoginRequiredMixin, ListView):
 
 
 
-# REST fRAMEWORK
-class PostAPIViewset(viewsets.ModelViewSet):
+# REST FRAMEWORK
 
-    queryset = Post.objects.all().select_related('category', 'author').prefetch_related('comment_set').annotate(post_likes=Count('likes'))
+class PostAPIViewSet(viewsets.ReadOnlyModelViewSet):
+    """list and detail post view, only get requests"""
+
+    queryset = Post.objects.select_related('category', 'author').prefetch_related('postimage_set').annotate(
+        post_likes=Count('likes', distinct=True),
+        comments=Count('comment', distinct=True))
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly ]
 
+
+class PostCreateAPIView(generics.CreateAPIView):
+    """create a post with images, only post request"""
+
+    serializer_class = PostCreateChangeSerializer
+    permission_classes = [IsAuthenticated]
+
+    # Any keyword argument passed into serializer.save(...) is merged directly into the validated_data dictionary
+    # right before your serializer's .create() method runs.
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+    
+
+class PostChangeAPIView(generics.UpdateAPIView, mixins.DestroyModelMixin):
+    """change or delete an existing post: put, patch and delete requests"""
+
+    queryset = Post.objects.select_related('author')
+    serializer_class = PostCreateChangeSerializer
+    permission_classes = [IsAuthenticated, IsAuthorOrReadOnly]
+
+    def perform_update(self, serializer):
+        serializer.save(author=self.request.user, status=Post.STATUS[0][0])
 
     def update(self, request, *args, **kwargs):
         kwargs['partial'] = True # Forces partial update
         return super().update(request, *args, **kwargs)
+    
+    # if I inherit from mixin, I need to write corresponding method (update(), delete() or other) in my class!!!
+    # without it I'll get an error - method is not allowed!!!
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
 
 
 class TotalPostInfoAPIView(APIView):
+    """list of all categories with posts ids, ammount of posts per category, general ammount of posts, comments, likes for statistics"""
     
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        posts = Post.objects.all()
         serializer = BlogInfoSerializer({
             'category': Category.objects.prefetch_related('post_set'),   
-            'total_posts': len(posts),
+            'total_posts': Post.objects.count(),
             'total_comments': Comment.objects.count(),
-            'total_likes': posts.aggregate(likes_count=Count('likes'))['likes_count'],
+            'total_likes': Post.objects.aggregate(likes=Count('likes'))['likes'],
             })
         return Response(serializer.data)
     
     
 class CommentAPIView(generics.ListAPIView):
+    """list of all comments"""
 
-    queryset  = Comment.objects.all().select_related('user', 'post')
+    queryset  = Comment.objects.select_related('user', 'post')
     serializer_class = CommentSerializer
 
 
 class UserPostAPIView(generics.ListAPIView):
+    """list of posts user created and list of posts user liked"""
     
-    queryset = Post.objects.all().select_related('category', 'author').prefetch_related('comment_set').annotate(post_likes=Count('likes'))
+    queryset = Post.objects.select_related('category', 'author').prefetch_related('postimage_set').annotate(
+        post_likes=Count('likes', distinct=True),
+        comments=Count('comment', distinct=True))
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
 
@@ -476,7 +508,10 @@ class UserPostAPIView(generics.ListAPIView):
 
                   
 class UserAPIView(generics.ListAPIView):
+    """profile info for user"""
 
-    queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdminUser] 
+    permission_classes = [IsAuthenticated] 
+
+    def get_queryset(self):
+        return get_user_model().objects.filter(id=self.request.user.id)

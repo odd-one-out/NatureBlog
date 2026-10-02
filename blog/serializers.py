@@ -1,28 +1,84 @@
 from rest_framework import serializers
 # serializer converts db model objects/query sets into a simple python list or dictionary, than to json format
 
-from blog.models import Category, Post, Comment
+from django.db import transaction
+
+from blog.models import Category, Post, PostImage, Comment
 from django.contrib.auth import get_user_model
 
 
+class PostImageSerializer(serializers.ModelSerializer):
+    """Serializer for showing images to a post"""
+
+    class Meta:
+        model = PostImage
+        fields = ['image']
+
+
 class PostSerializer(serializers.ModelSerializer):
-    """Serializer based on a Post Model(almost all fields), includes comments for each post"""
+    """Serializer for showing posts, includes images, ammount of comments and likes per post"""
     
-    user = serializers.ReadOnlyField(source='author.username')
-    comments = serializers.SerializerMethodField()
+    author = serializers.ReadOnlyField(source='author.username')
+    category = serializers.ReadOnlyField(source='category.name')
+    postimage_set = PostImageSerializer(many=True)
+    comments = serializers.ReadOnlyField()
     post_likes = serializers.ReadOnlyField()
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'description', 'image1', 'image2', 'image3','video_file', 'date', 'category', 'user', 'comment_set', 'comments', 'post_likes']
-        read_only_fields = [ 'comment_set']
+        fields = ['id', 'title', 'description', 'video_file', 'postimage_set', 'date', 'category', 'author', 'comments', 'post_likes']
 
-    def get_comments(self, obj):
-        return obj.comment_set.count()
+
+class PostCreateChangeSerializer(serializers.ModelSerializer):
+    """Serializer for creating, updating or deleting a post and images to the post"""
+    # images should be sent via context variable 'images'
+
+    class Meta:
+        model = Post
+        fields = ['id', 'title', 'description', 'video_file', 'date', 'category', 'author']
+        read_only_fields = ['author']
+
+
+    def create(self, validated_data):
+
+        request = self.context.get('request')
+        images = request.FILES.getlist('images')
+        if len(images) > 3:
+            raise serializers.ValidationError({"detail": "You can't upload more than 3 images to a post"})
+
+        # Use atomic transaction to ensure everything saves or rolls back together
+        with transaction.atomic():
+            # Create the parent object
+            post = Post.objects.create(**validated_data)
+            
+            # Loop and create each related child object linked to the parent
+            for img_file in images:
+                PostImage.objects.create(post=post, image=img_file)
+                    
+        return post
+        
+    
+    def update(self, instance, validated_data):
+
+        request = self.context.get('request')
+        images = request.FILES.getlist('images')
+        if instance.postimage_set.count() + len(images) > 3:
+            raise serializers.ValidationError({"detail": "You can't have more than 3 images to a post"})
+
+        with transaction.atomic():
+            # Update parent fields
+            instance = super().update(instance, validated_data)
+            
+            # Re-create fresh images using the uploaded files
+            for img_file in images:
+                PostImage.objects.create(post=instance, image=img_file)
+
+        return instance
+
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    """Serializer based on a Category Model, includes posts for category"""
+    """Serializer based on a Category Model, includes posts ids for category"""
 
     posts_in_category = serializers.SerializerMethodField()
 
@@ -35,7 +91,7 @@ class CategorySerializer(serializers.ModelSerializer):
     
 
 class BlogInfoSerializer(serializers.Serializer):
-    """ Serializer for admins to get general info about posts"""
+    """ Serializer for admins to get general blog info"""
 
     category = CategorySerializer(many=True)
     total_posts = serializers.IntegerField()
@@ -59,7 +115,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = get_user_model()
-        fields = '__all__'
+        exclude = ['password', 'groups', 'user_permissions']
 
 
 

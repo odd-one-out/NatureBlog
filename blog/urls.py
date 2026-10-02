@@ -2,10 +2,8 @@ from django.urls import path, include
 
 from blog import views
 
-from rest_framework.routers import SimpleRouter
+from rest_framework import routers
 
-router = SimpleRouter()
-router.register(r'post-api', views.PostAPIViewset, basename='post-api')
 
 app_name = 'blog'
 
@@ -26,10 +24,16 @@ urlpatterns = [
     path('delete-comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
 
     # API paths
-     path('', include(router.urls)),
+     path('change-post-api/<int:pk>/', views.PostChangeAPIView.as_view(), name='change_post_api'),
+     path('create-post-api/', views.PostCreateAPIView.as_view(), name='create_post_api'),
      path('info-api/', views.TotalPostInfoAPIView.as_view(), name='total_info'),
      path('comment-api/', views.CommentAPIView.as_view(), name='comment_api'),
      path('user-posts-api/', views.UserPostAPIView.as_view(), name='userposts_api'),
      path('user-likes-api/', views.UserPostAPIView.as_view(), name='userlikes_api'),
-     path('users-api/', views.UserAPIView.as_view(), name='users_api'),
+     path('user-api/', views.UserAPIView.as_view(), name='user_api'),
 ]
+
+# API paths for post readonly viewset
+router = routers.SimpleRouter()
+router.register(r'post-api', views.PostAPIViewSet)
+urlpatterns += router.urls
