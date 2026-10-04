@@ -29,11 +29,27 @@ from datetime import timedelta, datetime, timezone
 
 User = get_user_model()
 
+
+def generate_test_image(name):
+    """Generates a dummy 100x100 pixel RGB image in memory."""
+
+    file_obj = BytesIO()
+    # Create a small, solid red square image
+    image = Image.new("RGB", size=(100, 100), color=(255, 0, 0))
+    image.save(file_obj, format="PNG")
+    file_obj.seek(0)
+    
+    # Wrap it in a Django SimpleUploadedFile
+    return SimpleUploadedFile(
+        name=f"{name}.png",
+        content=file_obj.read(),
+        content_type="image/png"
+    )
+
 class DataSetTestCase(TestCase):
     """
     TestCase inherited class with data for testing - 2 posts
     """
-
     @classmethod
     def setUpTestData(cls):
         cls.category = Category.objects.create(name='Insects')
@@ -407,22 +423,6 @@ class UserPostTest(TestCase):
     """ class to test user actions with a post: create, edit, delete;
     and to test profile options - my posts, favourite posts(posts user liked), my comments"""
 
-    @staticmethod
-    def generate_test_image(name):
-        """Generates a dummy 100x100 pixel RGB image in memory."""
-        file_obj = BytesIO()
-        # Create a small, solid red square image
-        image = Image.new("RGB", size=(100, 100), color=(255, 0, 0))
-        image.save(file_obj, format="PNG")
-        file_obj.seek(0)
-        
-        # Wrap it in a Django SimpleUploadedFile
-        return SimpleUploadedFile(
-            name=f"{name}.png",
-            content=file_obj.read(),
-            content_type="image/png"
-        )
-
     @classmethod
     def setUpTestData(cls):
         # this user has no posts, he liked and commented 1 post
@@ -461,7 +461,7 @@ class UserPostTest(TestCase):
         self.client.force_login(user=self.user1)
 
         # creating image for test
-        test_image = self.generate_test_image('test_image')
+        test_image = generate_test_image('test_image')
 
         # to pass the correct category, i need to pass category_id, because it's a select field which saves values by id
         data = {
@@ -552,9 +552,9 @@ class UserPostTest(TestCase):
     def test_post_edit_post_request_valid_data(self):
         #create post with image
         post_with_img = self.category.post_set.create(title="image post", status='Published', author=self.user2)
-        img = PostImage.objects.create(image=self.generate_test_image('existing_img'), post=post_with_img)
+        img = PostImage.objects.create(image=generate_test_image('existing_img'), post=post_with_img)
 
-        new_img = self.generate_test_image('new_img')
+        new_img = generate_test_image('new_img')
         
         self.client.force_login(user=self.user2)
         url = reverse('blog:editpost', args=[post_with_img.id])
@@ -727,6 +727,7 @@ class UserPostTest(TestCase):
 # to comment a post user should send a post request to a detail page, it must contain 'submit-comment' in data
 # user can comment his own posts
 class CommentTest(TestCase):
+    """ class to test if users can leave comments to posts and can delete only their own comments"""
 
     @classmethod
     def setUpTestData(cls):
@@ -806,6 +807,7 @@ class CommentTest(TestCase):
 # to like a post user should send a post request to a detail page
 # user can like his own posts
 class LikePostTest(TestCase):
+    """ class to test if users can like and unlike a post """
 
     @classmethod
     def setUpTestData(cls):
