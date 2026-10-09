@@ -173,34 +173,8 @@ class PostView(DetailView):
     
     
 
- #USER POSTs VIEWS    
+ # USER POSTs VIEWS    
 
-# class CreatePostView(LoginRequiredMixin, FormView):
-
-#     template_name = "blog/create_post.html"
-#     form_class = PostForm
-#     success_url = reverse_lazy('user:profile')
-#     extra_context = {
-#         'title': 'Nature Blog - create post',
-#         'page_title': 'Post creation',
-#         'btn_name': 'Create post' # this is needed because the same template is also used for editing post
-#     }
-
-#     def form_valid(self, form):
-#         post = form.save(commit=False)
-#         post.author = self.request.user
-#         post.save()
-#         messages.success(self.request, 'Your post is created successfully. It\'s on moderation now.')
-#         if post.author.email:
-#             message = f'Hello, {post.author.username}, thanks for creating a post \'{post.title}\'. It\'s on moderation now'
-#             from_email = settings.EMAIL_HOST_USER
-#             to_email = post.author.email
-#             send_mail('New post created',
-#             message,
-#             from_email,
-#             [to_email],
-#             fail_silently=False,)
-#         return redirect(self.success_url)
 
 @login_required
 def create_post(request):
@@ -263,34 +237,8 @@ def create_post(request):
 
 
 
-
-# class EditPostView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-
-#     model = Post
-#     form_class = PostForm
-#     template_name = "blog/create_post.html"
-#     success_url = reverse_lazy('user:profile')
-#     extra_context = {
-#         'title': 'Nature Blog - edit post',
-#         'page_title': 'Post editing',
-#         'btn_name': 'Edit post' # this is needed because the same template is also used for creating post
-#     }
-
-#     def test_func(self):
-#         # Get the object the user is trying to access
-#         post = self.get_object()
-#         # Return True if the current user is the object's author, False otherwise
-#         return post.author == self.request.user
-
-#     def form_valid(self, form):
-#         post = form.save(commit=False)     
-#         post.status = Post.STATUS[0][0]
-#         post.save()
-#         messages.success(self.request, 'your post was edited successfully. It\'s on moderation now.')
-#         return redirect(self.success_url)
-
-
 def get_images_quantity(obj, max_imgs):
+    """ count the number of images user can upload, maximum for post - 3 """
     if obj.postimage_set.exists():
         return max_imgs - obj.postimage_set.count()
     return max_imgs
@@ -419,11 +367,6 @@ class UserCommentsView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Comment.objects.filter(user=self.request.user).select_related('post').only('date', 'text', 'post__title', 'post__slug')
     
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
-    #     context['title'] =  'Nature Blog - My Comments'
-    #     return context
-
 
 
 # REST FRAMEWORK

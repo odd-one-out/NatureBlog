@@ -169,7 +169,8 @@ INTERNAL_IPS = [
     "172.18.0.1",
 ]
 
-# email backend is used for changing user's password (send a link to set a new one)
+# email backend is used for changing user's password (send a link to set a new one) 
+# and to inform user about successful post creation
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 #EMAIL_FILE_PATH = BASE_DIR / 'emails'
 EMAIL_HOST = 'smtp.gmail.com'
