@@ -13,7 +13,7 @@ ENV PYTHONUNBUFFERED=1
 # Upgrade pip
 RUN pip install --upgrade pip 
  
-# Copy the Django project  and install dependencies
+# Copy requirements file to the container
 COPY requirements.txt  /app
  
 # run this command to install all dependencies 
