@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 
@@ -108,23 +110,23 @@ class Comment(models.Model):
     def show_date(self):
         """converts date object to string that shows how long ago user commented"""
         
-        from datetime import datetime
-        from zoneinfo import ZoneInfo
-        now_time = datetime.now(ZoneInfo("UTC"))
-        diff = now_time-self.date #timedelta object
-        if diff.days:
-            if diff.days <= 29:
-                return f'{diff.days} days ago' if diff.days>1 else f'{diff.days} day ago'
-            elif 29 < diff.days:
-                months = diff.days//30
-                return f'{months} months ago' if months>1 else f'{months} month ago'
-        else:
-            hours = diff.seconds//3600
-            minutes = diff.seconds//60
-            if hours:
-                return f'{hours} hours ago' if hours>1 else f'{hours} hour ago'
-            elif minutes and not hours:
-                return f'{minutes} minutes ago' if minutes>1 else f'{minutes} minute ago'
-            else:
-                return f'{diff.seconds} seconds ago'
+        now = timezone.now()
+        diff = relativedelta(now, self.date)
+
+        TIME_UNITS = [
+            ("years", "year"),
+            ("months", "month"),
+            ("days", "day"),
+            ("hours", "hour"),
+            ("minutes", "minute"),
+            ("seconds", "second"),
+        ]
+
+        for attr, time_unit in TIME_UNITS:
+            value = getattr(diff, attr)
+            if value:
+                suffix = "s" if value > 1 else ""
+                return f'{value} {time_unit}{suffix} ago'
+        return 'just now'
+
 
